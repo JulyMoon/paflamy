@@ -1,13 +1,15 @@
 using System;
+using System.Drawing;
+
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.ES11;
 using OpenTK.Platform;
 using OpenTK.Platform.Android;
+
 using Android.Views;
 using Android.Content;
 using Android.Util;
-using System.Drawing;
 
 namespace Paflamy
 {
@@ -18,17 +20,23 @@ namespace Paflamy
         private readonly int SCREEN_WIDTH;
         private readonly int SCREEN_HEIGHT;
 
-        private const int TILE_WIDTH = 30;
-        private const int TILE_HEIGHT = 45;
+        private const float HORI_BORDER = 0;
+        private const float VERT_BORDER = 0;
 
-        private float objx, objy;
+        private float tileWidth;
+        private float tileHeight;
 
-        private double time;
+        //private double time;
+
+        private Game game = new Game();
 
         public PaflamyView(Context context) : base(context)
         {
             SCREEN_WIDTH = Resources.DisplayMetrics.WidthPixels;
             SCREEN_HEIGHT = Resources.DisplayMetrics.HeightPixels;
+
+            tileWidth = (SCREEN_WIDTH - 2 * HORI_BORDER) / game.Width;
+            tileHeight = (SCREEN_HEIGHT - 2 * VERT_BORDER) / game.Height;
         }
 
         protected override void OnLoad(EventArgs e)
@@ -38,6 +46,7 @@ namespace Paflamy
             Log.Verbose(DBG_TAG, $"w: {SCREEN_WIDTH}, h: {SCREEN_HEIGHT}");
 
             GL.ClearColor(0, 0, 0, 1);
+            GL.PointSize(Math.Min(SCREEN_WIDTH, SCREEN_HEIGHT) * 0.009f);
             GL.MatrixMode(All.Projection);
             GL.LoadIdentity();
             GL.Ortho(0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, -1, 1);
@@ -50,10 +59,41 @@ namespace Paflamy
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             base.OnUpdateFrame(e);
-            time += e.Time;
+            //time += e.Time;
+        }
 
-            objx = ((float)Math.Cos(time) + 1) / 2 * (SCREEN_WIDTH - TILE_WIDTH);
-            objy = ((float)Math.Sin(time) + 1) / 2 * (SCREEN_HEIGHT - TILE_HEIGHT);
+        private void DrawMap()
+        {
+            GL.PushMatrix();
+            GL.Translate(HORI_BORDER, VERT_BORDER, 0);
+
+            for (int x = 0; x < game.Width; ++x)
+                for (int y = 0; y < game.Height; ++y)
+                        DrawGridTile(x, y);
+
+            GL.PopMatrix();
+        }
+
+        private void DrawGridTile(int x, int y)
+        {
+            DrawTile(x * tileWidth, y * tileHeight, game.Get(x, y));
+
+            if (game.IsLocked(x, y))
+            {
+                GLColor4(Color.Black);
+
+                GL.EnableClientState(All.VertexArray);
+
+                var vertices = new float[]
+                {
+                    (x + 0.5f) * tileWidth, (y + 0.5f) * tileHeight
+                };
+
+                GL.VertexPointer(2, All.Float, 0, vertices);
+
+                GL.DrawArrays(All.Points, 0, 1);
+                GL.DisableClientState(All.VertexArray);
+            }
         }
 
         private void DrawTile(float x, float y, Color tile)
@@ -68,9 +108,9 @@ namespace Paflamy
             var vertices = new float[]
             {
                 0, 0,
-                TILE_WIDTH, 0,
-                0, TILE_HEIGHT,
-                TILE_WIDTH, TILE_HEIGHT
+                tileWidth, 0,
+                0, tileHeight,
+                tileWidth, tileHeight
             };
 
             GL.VertexPointer(2, All.Float, 0, vertices);
@@ -86,7 +126,7 @@ namespace Paflamy
             base.OnRenderFrame(e);
             GL.Clear((uint)All.ColorBufferBit);
 
-            DrawTile(objx, objy, Color.Red);
+            DrawMap();
 
             SwapBuffers();
         }
