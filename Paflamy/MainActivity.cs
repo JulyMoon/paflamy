@@ -19,14 +19,13 @@ namespace Paflamy
         )]
     public class MainActivity : Activity
     {
-        GLView1 view;
+        PaflamyView view;
 
         protected override void OnCreate(Bundle bundle)
         {
             base.OnCreate(bundle);
-
-            // Create our OpenGL view, and display it
-            view = new GLView1(this);
+            
+            view = new PaflamyView(this);
             SetContentView(view);
         }
 
