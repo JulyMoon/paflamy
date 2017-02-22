@@ -25,8 +25,12 @@ namespace Paflamy
 
         private float tileWidth;
         private float tileHeight;
+        
+        private float mx, my;
 
-        //private double time;
+        private bool dragging;
+        private int dragTileX, dragTileY;
+        private float dragOffsetX, dragOffsetY;
 
         private Game game = new Game();
 
@@ -43,7 +47,7 @@ namespace Paflamy
         {
             base.OnLoad(e);
 
-            Log.Verbose(DBG_TAG, $"w: {SCREEN_WIDTH}, h: {SCREEN_HEIGHT}");
+            Log($"w: {SCREEN_WIDTH}, h: {SCREEN_HEIGHT}");
 
             GL.ClearColor(0, 0, 0, 1);
             GL.PointSize(Math.Min(SCREEN_WIDTH, SCREEN_HEIGHT) * 0.009f);
@@ -56,10 +60,68 @@ namespace Paflamy
             Run();
         }
 
-        protected override void OnUpdateFrame(FrameEventArgs e)
+        public override bool OnTouchEvent(MotionEvent e)
         {
-            base.OnUpdateFrame(e);
-            //time += e.Time;
+            mx = e.GetX();
+            my = e.GetY();
+
+            if (e.Action != MotionEventActions.Down && e.Action != MotionEventActions.Up)
+                return true;
+
+            float xx = mx - HORI_BORDER;
+            float yy = my - VERT_BORDER;
+
+            if (xx >= 0 && yy >= 0)
+            {
+                float ox = xx % tileWidth;
+                float oy = yy % tileHeight;
+
+                int ix = (int)(xx / tileWidth);
+                int iy = (int)(yy / tileHeight);
+                if (ix < game.Width && iy < game.Height && !game.IsLocked(ix, iy))
+                {
+                    if (e.Action == MotionEventActions.Down)
+                    {
+                        dragging = true;
+                        dragTileX = ix;
+                        dragTileY = iy;
+                        dragOffsetX = ox;
+                        dragOffsetY = oy;
+                    }
+                    else if (dragging) // this is NOT redundant
+                                       // start dragging a locked tile and drop on a regular one
+                                       // in that case the event is up but we're not dragging anything
+                    {
+                        dragging = false;
+
+                        if (dragTileX != ix || dragTileY != iy)
+                        {
+                            game.Swap(dragTileX, dragTileY, ix, iy);
+                            if (game.IsSolved)
+                                Log("SOLVED");
+                        }
+                    }
+                    
+                }
+                else if (dragging)
+                {
+                    dragging = false;
+                }
+            }
+            else if (dragging)
+            {
+                dragging = false;
+            }
+
+            return true;
+        }
+
+        private void DrawDrag()
+        {
+            if (!dragging)
+                return;
+
+            DrawTile(mx - dragOffsetX, my - dragOffsetY, game.Get(dragTileX, dragTileY));
         }
 
         private void DrawMap()
@@ -69,6 +131,7 @@ namespace Paflamy
 
             for (int x = 0; x < game.Width; ++x)
                 for (int y = 0; y < game.Height; ++y)
+                    if (!dragging || x != dragTileX || y != dragTileY)
                         DrawGridTile(x, y);
 
             GL.PopMatrix();
@@ -127,29 +190,33 @@ namespace Paflamy
             GL.Clear((uint)All.ColorBufferBit);
 
             DrawMap();
+            DrawDrag();
 
             SwapBuffers();
         }
 
-        private void GLColor4(Color c)
+        private static void GLColor4(Color c)
             => GL.Color4(c.R, c.G, c.B, c.A);
+
+        public static void Log(string s)
+            => Android.Util.Log.Verbose(DBG_TAG, s);
 
         protected override void CreateFrameBuffer()
         {
             try
             {
-                Log.Verbose(DBG_TAG, "Loading with default settings");
+                Log("Loading with default settings");
                 base.CreateFrameBuffer();
                 return;
             }
             catch (Exception ex)
             {
-                Log.Verbose(DBG_TAG, ex.ToString());
+                Log(ex.ToString());
             }
 
             try
             {
-                Log.Verbose(DBG_TAG, "Loading with custom Android settings (low mode)");
+                Log("Loading with custom Android settings (low mode)");
                 GraphicsMode = new AndroidGraphicsMode(0, 0, 0, 0, 0, false);
 
                 base.CreateFrameBuffer();
@@ -157,7 +224,7 @@ namespace Paflamy
             }
             catch (Exception ex)
             {
-                Log.Verbose(DBG_TAG, ex.ToString());
+                Log(ex.ToString());
             }
 
             throw new Exception("Can't load egl, aborting");
