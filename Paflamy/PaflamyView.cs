@@ -25,6 +25,7 @@ namespace Paflamy
 
         private float tileWidth;
         private float tileHeight;
+        private float menuTileSize;
         
         private float mx, my;
 
@@ -41,6 +42,8 @@ namespace Paflamy
 
             tileWidth = (SCREEN_WIDTH - 2 * HORI_BORDER) / game.Width;
             tileHeight = (SCREEN_HEIGHT - 2 * VERT_BORDER) / game.Height;
+
+            menuTileSize = tileWidth;
         }
 
         protected override void OnLoad(EventArgs e)
@@ -121,7 +124,7 @@ namespace Paflamy
             if (!dragging)
                 return;
 
-            DrawTile(mx - dragOffsetX, my - dragOffsetY, game.Get(dragTileX, dragTileY));
+            DrawTile(mx - dragOffsetX, my - dragOffsetY, tileWidth, tileHeight, game.Get(dragTileX, dragTileY));
         }
 
         private void DrawMap()
@@ -139,7 +142,7 @@ namespace Paflamy
 
         private void DrawGridTile(int x, int y)
         {
-            DrawTile(x * tileWidth, y * tileHeight, game.Get(x, y));
+            DrawTile(x * tileWidth, y * tileHeight, tileWidth, tileHeight, game.Get(x, y));
 
             if (game.IsLocked(x, y))
             {
@@ -159,7 +162,7 @@ namespace Paflamy
             }
         }
 
-        private void DrawTile(float x, float y, Color tile)
+        private void DrawTile(float x, float y, float width, float height, Color tile)
         {
             GL.PushMatrix();
             GL.Translate(x, y, 0);
@@ -171,9 +174,9 @@ namespace Paflamy
             var vertices = new float[]
             {
                 0, 0,
-                tileWidth, 0,
-                0, tileHeight,
-                tileWidth, tileHeight
+                width, 0,
+                0, height,
+                width, height
             };
 
             GL.VertexPointer(2, All.Float, 0, vertices);
@@ -184,13 +187,30 @@ namespace Paflamy
             GL.PopMatrix();
         }
 
+        private void DrawPlayingStage()
+        {
+            DrawMap();
+            DrawDrag();
+        }
+
+        private void DrawMenuStage()
+        {
+            for (int x = 0; x < game.Width; ++x)
+                for (int y = 0; y < game.Height; ++y)
+                    DrawTile(x * menuTileSize, y * menuTileSize, menuTileSize, menuTileSize, game.Get(x, y));
+        }
+
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             base.OnRenderFrame(e);
             GL.Clear((uint)All.ColorBufferBit);
 
-            DrawMap();
-            DrawDrag();
+            switch (game.Stage)
+            {
+                case Stage.Playing: DrawPlayingStage(); break;
+                case Stage.Menu: DrawMenuStage(); break;
+                default: throw new Exception();
+            }
 
             SwapBuffers();
         }

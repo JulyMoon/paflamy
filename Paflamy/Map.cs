@@ -13,6 +13,11 @@ using Android.Widget;
 
 namespace Paflamy
 {
+    public enum Lock
+    {
+        None, Borders, Checkered
+    }
+
     public class Map
     {
         public readonly Color TopLeft;
@@ -26,7 +31,7 @@ namespace Paflamy
         private Color[,] tiles;
         private bool[,] locked;
 
-        public Map(int width, int height, Color topLeft, Color topRight, Color bottomRight, Color bottomLeft)
+        public Map(int width, int height, Color topLeft, Color topRight, Color bottomRight, Color bottomLeft, Lock l)
         {
             TopLeft = topLeft;
             TopRight = topRight;
@@ -44,17 +49,21 @@ namespace Paflamy
                     solution[x, y] = Blerp(topLeft, topRight, bottomRight, bottomLeft, (double)x / (Width - 1), (double)y / (Height - 1));
                     tiles[x, y] = solution[x, y];
 
+                    // mirror
                     int ax = x < Width / 2 ? x : Width - x - 1;
                     int ay = y < Height / 2 ? y : Height - y - 1;
-                    locked[x, y] = ax == 0 || ay == 0; //(ax + ay) % 2 == 0;
+
+                    switch (l)
+                    {
+                        case Lock.None: locked[x, y] = false; break;
+                        case Lock.Borders: locked[x, y] = ax == 0 || ay == 0; break;
+                        case Lock.Checkered: locked[x, y] = (ax + ay) % 2 == 0; break;
+                        default: throw new Exception();
+                    }
                 }
-
-            //locked[0, 0] = locked[Width - 1, 0] = locked[Width - 1, Height - 1] = locked[0, Height - 1] = true;
-
-            Randomize();
         }
-
-        private void Randomize()
+        
+        public void Randomize()
         {
             var spots = new List<Tuple<int, int>>();
             var freeTiles = new List<Color>();
@@ -67,7 +76,7 @@ namespace Paflamy
                         freeTiles.Add(solution[x, y]);
                     }
 
-                newShuffle:
+            newShuffle:
             freeTiles.Shuffle();
 
             for (int i = 0; i < spots.Count; ++i)
@@ -126,7 +135,7 @@ namespace Paflamy
 
 public static class ExtensionMethods
 {
-    private static readonly Random random = new Random();
+    public static readonly Random Random = new Random();
 
     public static void Shuffle<T>(this IList<T> list)
     {
@@ -134,7 +143,7 @@ public static class ExtensionMethods
         while (n > 1)
         {
             n--;
-            int k = random.Next(n + 1);
+            int k = Random.Next(n + 1);
             T value = list[k];
             list[k] = list[n];
             list[n] = value;

@@ -14,18 +14,33 @@ using Android.Widget;
 
 namespace Paflamy
 {
-    class Game
+    public enum Stage
     {
+        Menu, Playing
+    }
+
+    public class Game
+    {
+        public Stage Stage { get; private set; } = Stage.Menu;
+
         public int Width => map.Width;
         public int Height => map.Height;
 
-        private static readonly Random random = new Random();
-
         private Map map;
+
         public Game()
         {
             var colors = GetRandomColors();
-            map = new Map(9, 10, colors[0], colors[1], colors[2], colors[3]);
+            map = new Map(7, 7, colors[0], colors[1], colors[2], colors[3], Lock.None);
+            map.Swap(1, 1, Width - 2, Height - 2);
+        }
+
+        public void Play()
+        {
+            Stage = Stage.Playing;
+            var colors = GetRandomColors();
+            map = new Map(9, 10, colors[0], colors[1], colors[2], colors[3], Lock.Borders);
+            map.Randomize();
         }
 
         private List<Color> GetRandomColors()
@@ -38,7 +53,7 @@ namespace Paflamy
                 int rand;
                 do
                 {
-                    rand = random.Next(colors.Length);
+                    rand = ExtensionMethods.Random.Next(colors.Length);
                 } while (nums.Contains(rand));
                 nums.Add(rand);
             }
