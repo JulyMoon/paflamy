@@ -12,6 +12,7 @@ namespace Paflamy
     [Activity(Label = "Paflamy",
         MainLauncher = true,
         Icon = "@drawable/icon",
+        ScreenOrientation = ScreenOrientation.Portrait,
         ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.KeyboardHidden
 #if __ANDROID_11__
 		,HardwareAccelerated=false
