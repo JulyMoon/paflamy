@@ -23,6 +23,9 @@ namespace Paflamy
         private const float HORI_BORDER = 0;
         private const float VERT_BORDER = 0;
 
+        private RectangleF startButton;
+        private Color startColor = Color.DodgerBlue;
+
         private float tileWidth;
         private float tileHeight;
         private float menuTileSize;
@@ -40,10 +43,19 @@ namespace Paflamy
             SCREEN_WIDTH = Resources.DisplayMetrics.WidthPixels;
             SCREEN_HEIGHT = Resources.DisplayMetrics.HeightPixels;
 
-            tileWidth = (SCREEN_WIDTH - 2 * HORI_BORDER) / game.Width;
-            tileHeight = (SCREEN_HEIGHT - 2 * VERT_BORDER) / game.Height;
+            CalcTileSize();
 
             menuTileSize = tileWidth;
+
+            float bWidth = SCREEN_WIDTH / 3f;
+            float bHeight = (SCREEN_HEIGHT - menuTileSize * game.Height) / 3;
+            startButton = new RectangleF(bWidth, menuTileSize * game.Height + bHeight, bWidth, bHeight);
+        }
+
+        private void CalcTileSize()
+        {
+            tileWidth = (SCREEN_WIDTH - 2 * HORI_BORDER) / game.Width;
+            tileHeight = (SCREEN_HEIGHT - 2 * VERT_BORDER) / game.Height;
         }
 
         protected override void OnLoad(EventArgs e)
@@ -52,7 +64,7 @@ namespace Paflamy
 
             Log($"w: {SCREEN_WIDTH}, h: {SCREEN_HEIGHT}");
 
-            GL.ClearColor(0, 0, 0, 1);
+            GL.ClearColor(247f / 255, 239f / 255, 210f / 255, 1);
             GL.PointSize(Math.Min(SCREEN_WIDTH, SCREEN_HEIGHT) * 0.009f);
             GL.MatrixMode(All.Projection);
             GL.LoadIdentity();
@@ -63,13 +75,23 @@ namespace Paflamy
             Run();
         }
 
-        public override bool OnTouchEvent(MotionEvent e)
+        private void HandleMenuTouch(MotionEvent e)
+        {
+            if (e.Action == MotionEventActions.Down &&
+                startButton.IntersectsWith(new RectangleF(e.GetX(), e.GetY(), 1, 1)))
+            {
+                game.Play();
+                CalcTileSize();
+            }
+        }
+
+        private void HandleGameTouch(MotionEvent e)
         {
             mx = e.GetX();
             my = e.GetY();
 
             if (e.Action != MotionEventActions.Down && e.Action != MotionEventActions.Up)
-                return true;
+                return;
 
             float xx = mx - HORI_BORDER;
             float yy = my - VERT_BORDER;
@@ -104,7 +126,7 @@ namespace Paflamy
                                 Log("SOLVED");
                         }
                     }
-                    
+
                 }
                 else if (dragging)
                 {
@@ -115,6 +137,16 @@ namespace Paflamy
             {
                 dragging = false;
             }
+        }
+
+        public override bool OnTouchEvent(MotionEvent e)
+        {
+            switch (game.Stage)
+            {
+                case Stage.Playing: HandleGameTouch(e); break;
+                case Stage.Menu: HandleMenuTouch(e); break;
+                default: throw new Exception();
+            }
 
             return true;
         }
@@ -124,7 +156,7 @@ namespace Paflamy
             if (!dragging)
                 return;
 
-            DrawTile(mx - dragOffsetX, my - dragOffsetY, tileWidth, tileHeight, game.Get(dragTileX, dragTileY));
+            DrawRectangle(mx - dragOffsetX, my - dragOffsetY, tileWidth, tileHeight, game.Get(dragTileX, dragTileY));
         }
 
         private void DrawMap()
@@ -142,7 +174,7 @@ namespace Paflamy
 
         private void DrawGridTile(int x, int y)
         {
-            DrawTile(x * tileWidth, y * tileHeight, tileWidth, tileHeight, game.Get(x, y));
+            DrawRectangle(x * tileWidth, y * tileHeight, tileWidth, tileHeight, game.Get(x, y));
 
             if (game.IsLocked(x, y))
             {
@@ -162,12 +194,12 @@ namespace Paflamy
             }
         }
 
-        private void DrawTile(float x, float y, float width, float height, Color tile)
+        private void DrawRectangle(float x, float y, float width, float height, Color color)
         {
             GL.PushMatrix();
             GL.Translate(x, y, 0);
 
-            GLColor4(tile);
+            GLColor4(color);
 
             GL.EnableClientState(All.VertexArray);
 
@@ -197,7 +229,9 @@ namespace Paflamy
         {
             for (int x = 0; x < game.Width; ++x)
                 for (int y = 0; y < game.Height; ++y)
-                    DrawTile(x * menuTileSize, y * menuTileSize, menuTileSize, menuTileSize, game.Get(x, y));
+                    DrawRectangle(x * menuTileSize, y * menuTileSize, menuTileSize, menuTileSize, game.Get(x, y));
+
+            DrawRectangle(startButton.X, startButton.Y, startButton.Width, startButton.Height, startColor);
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
