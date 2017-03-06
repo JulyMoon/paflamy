@@ -16,26 +16,26 @@ namespace Paflamy
 {
     public enum Stage
     {
-        Menu, Playing
+        Start, Playing
     }
 
-    public class Game
+    public static class Game
     {
-        public Stage Stage { get; private set; } = Stage.Menu;
+        public static Stage Stage { get; private set; } = Stage.Start;
 
-        public int Width => map.Width;
-        public int Height => map.Height;
+        public static int Width => map.Width;
+        public static int Height => map.Height;
 
-        private Map map;
+        private static Map map;
 
-        public Game()
+        public static void Init()
         {
             var colors = GetRandomColors();
             map = new Map(7, 7, colors[0], colors[1], colors[2], colors[3], Lock.None);
             map.Swap(1, 1, Width - 2, Height - 2);
         }
 
-        public void Play()
+        public static void Play()
         {
             Stage = Stage.Playing;
             var colors = GetRandomColors();
@@ -43,7 +43,7 @@ namespace Paflamy
             map.Randomize();
         }
 
-        private List<Color> GetRandomColors()
+        private static List<Color> GetRandomColors()
         {
             var colors = (KnownColor[])Enum.GetValues(typeof(KnownColor));
 
@@ -64,16 +64,16 @@ namespace Paflamy
                                      Color.FromKnownColor(colors[nums[3]]) };
         }
 
-        public void Swap(int x1, int y1, int x2, int y2)
+        public static void Swap(int x1, int y1, int x2, int y2)
             => map.Swap(x1, y1, x2, y2);
 
-        public Color Get(int x, int y)
+        public static Color Get(int x, int y)
             => map.Get(x, y);
 
-        public bool IsLocked(int x, int y)
+        public static bool IsLocked(int x, int y)
             => map.IsLocked(x, y);
 
-        public bool IsSolved
+        public static bool IsSolved
             => map.IsSolved();
     }
 }
