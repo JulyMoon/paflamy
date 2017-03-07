@@ -29,7 +29,7 @@ namespace Paflamy
         private static void HandleMenuTouch(MotionEvent e)
         {
             if (e.Action == MotionEventActions.Down &&
-                Graphics.startButton.IntersectsWith(new RectangleF(e.GetX(), e.GetY(), 1, 1)))
+                Graphics.StartButton.IntersectsWith(new RectangleF(e.GetX(), e.GetY(), 1, 1)))
             {
                 Game.Play();
                 Graphics.CalcTileSize();
@@ -49,11 +49,11 @@ namespace Paflamy
 
             if (xx >= 0 && yy >= 0)
             {
-                float ox = xx % Graphics.tileWidth;
-                float oy = yy % Graphics.tileHeight;
+                float ox = xx % Graphics.TileWidth;
+                float oy = yy % Graphics.TileHeight;
 
-                int ix = (int)(xx / Graphics.tileWidth);
-                int iy = (int)(yy / Graphics.tileHeight);
+                int ix = (int)(xx / Graphics.TileWidth);
+                int iy = (int)(yy / Graphics.TileHeight);
                 if (ix < Game.Width && iy < Game.Height && !Game.IsLocked(ix, iy))
                 {
                     if (e.Action == MotionEventActions.Down)

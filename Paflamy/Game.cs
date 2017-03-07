@@ -26,6 +26,10 @@ namespace Paflamy
         public static int Width => map.Width;
         public static int Height => map.Height;
 
+        public delegate void SimpleHandler();
+
+        public static event SimpleHandler MapChanged;
+
         private static Map map;
 
         public static void Init()
@@ -35,12 +39,16 @@ namespace Paflamy
             map.Swap(1, 1, Width - 2, Height - 2);
         }
 
+        private static void OnMapChanged()
+            => MapChanged?.Invoke();
+
         public static void Play()
         {
             Stage = Stage.Playing;
             var colors = GetRandomColors();
             map = new Map(9, 10, colors[0], colors[1], colors[2], colors[3], Lock.Borders);
             map.Randomize();
+            OnMapChanged();
         }
 
         private static List<Color> GetRandomColors()
@@ -53,7 +61,7 @@ namespace Paflamy
                 int rand;
                 do
                 {
-                    rand = ExtensionMethods.Random.Next(colors.Length);
+                    rand = Util.Random.Next(colors.Length);
                 } while (nums.Contains(rand));
                 nums.Add(rand);
             }

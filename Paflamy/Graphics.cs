@@ -21,12 +21,12 @@ namespace Paflamy
         public const float HORI_BORDER = 0;
         public const float VERT_BORDER = 0;
 
-        public static RectangleF startButton { get; private set; }
-        public static readonly Color startColor = Color.DodgerBlue;
+        public static RectangleF StartButton { get; private set; }
+        public static readonly Color StartColor = Color.DodgerBlue;
 
-        public static float tileWidth { get; private set; }
-        public static float tileHeight { get; private set; }
-        public static float menuTileSize { get; private set; }
+        public static float TileWidth { get; private set; }
+        public static float TileHeight { get; private set; }
+        public static float MenuTileSize { get; private set; }
 
         public static void Init(int width, int height)
         {
@@ -35,17 +35,18 @@ namespace Paflamy
 
             CalcTileSize();
 
-            menuTileSize = tileWidth;
+            MenuTileSize = TileWidth;
 
             float bWidth = SCREEN_WIDTH / 3f;
-            float bHeight = (SCREEN_HEIGHT - menuTileSize * Game.Height) / 3;
-            startButton = new RectangleF(bWidth, menuTileSize * Game.Height + bHeight, bWidth, bHeight);
+            float bHeight = (SCREEN_HEIGHT - MenuTileSize * Game.Height) / 3;
+            StartButton = new RectangleF(bWidth, MenuTileSize * Game.Height + bHeight, bWidth, bHeight);
+            Game.MapChanged += CalcTileSize;
         }
 
         public static void CalcTileSize()
         {
-            tileWidth = (SCREEN_WIDTH - 2 * HORI_BORDER) / Game.Width;
-            tileHeight = (SCREEN_HEIGHT - 2 * VERT_BORDER) / Game.Height;
+            TileWidth = (SCREEN_WIDTH - 2 * HORI_BORDER) / Game.Width;
+            TileHeight = (SCREEN_HEIGHT - 2 * VERT_BORDER) / Game.Height;
         }
 
         public static void OnLoad()
@@ -66,7 +67,7 @@ namespace Paflamy
             if (!Input.dragging)
                 return;
 
-            DrawRectangle(Input.mx - Input.dragOffsetX, Input.my - Input.dragOffsetY, tileWidth, tileHeight, Game.Get(Input.dragTileX, Input.dragTileY));
+            DrawRectangle(Input.mx - Input.dragOffsetX, Input.my - Input.dragOffsetY, TileWidth, TileHeight, Game.Get(Input.dragTileX, Input.dragTileY));
         }
 
         private static void DrawMap()
@@ -84,7 +85,7 @@ namespace Paflamy
 
         private static void DrawGridTile(int x, int y)
         {
-            DrawRectangle(x * tileWidth, y * tileHeight, tileWidth, tileHeight, Game.Get(x, y));
+            DrawRectangle(x * TileWidth, y * TileHeight, TileWidth, TileHeight, Game.Get(x, y));
 
             if (Game.IsLocked(x, y))
             {
@@ -94,7 +95,7 @@ namespace Paflamy
 
                 var vertices = new float[]
                 {
-                    (x + 0.5f) * tileWidth, (y + 0.5f) * tileHeight
+                    (x + 0.5f) * TileWidth, (y + 0.5f) * TileHeight
                 };
 
                 GL.VertexPointer(2, All.Float, 0, vertices);
@@ -139,9 +140,9 @@ namespace Paflamy
         {
             for (int x = 0; x < Game.Width; ++x)
                 for (int y = 0; y < Game.Height; ++y)
-                    DrawRectangle(x * menuTileSize, y * menuTileSize, menuTileSize, menuTileSize, Game.Get(x, y));
+                    DrawRectangle(x * MenuTileSize, y * MenuTileSize, MenuTileSize, MenuTileSize, Game.Get(x, y));
 
-            DrawRectangle(startButton.X, startButton.Y, startButton.Width, startButton.Height, startColor);
+            DrawRectangle(StartButton.X, StartButton.Y, StartButton.Width, StartButton.Height, StartColor);
         }
 
         public static void OnRender(double dt)
