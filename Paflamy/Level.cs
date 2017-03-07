@@ -18,28 +18,14 @@ namespace Paflamy
         None, Borders, Checkered
     }
 
-    public class Map
+    public class Level : LevelInfo
     {
-        public readonly Color TopLeft;
-        public readonly Color TopRight;
-        public readonly Color BottomRight;
-        public readonly Color BottomLeft;
-
-        public readonly int Width, Height;
-
         private Color[,] solution;
         private Color[,] tiles;
         private bool[,] locked;
 
-        public Map(int width, int height, Color topLeft, Color topRight, Color bottomRight, Color bottomLeft, Lock l)
+        public Level(int width, int height, Color topLeft, Color topRight, Color bottomRight, Color bottomLeft, Lock l) : base(width, height, topLeft, topRight, bottomRight, bottomLeft, l)
         {
-            TopLeft = topLeft;
-            TopRight = topRight;
-            BottomRight = bottomRight;
-            BottomLeft = bottomLeft;
-            Width = width;
-            Height = height;
-
             solution = new Color[Width, Height];
             tiles = new Color[Width, Height];
             locked = new bool[Width, Height];
@@ -62,6 +48,9 @@ namespace Paflamy
                     }
                 }
         }
+
+        public Level(LevelInfo li) : this(li.Width, li.Height, li.TopLeft, li.TopRight, li.BottomRight, li.BottomLeft, li.Lock)
+        { }
         
         public void Randomize()
         {

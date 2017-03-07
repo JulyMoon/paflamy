@@ -23,32 +23,33 @@ namespace Paflamy
     {
         public static Stage Stage { get; private set; } = Stage.Start;
 
-        public static int Width => map.Width;
-        public static int Height => map.Height;
+        public static int Width => level.Width;
+        public static int Height => level.Height;
 
         public delegate void SimpleHandler();
 
-        public static event SimpleHandler MapChanged;
+        public static event SimpleHandler LevelChanged;
 
-        private static Map map;
+        private static Level level;
 
         public static void Init()
         {
             var colors = GetRandomColors();
-            map = new Map(7, 7, colors[0], colors[1], colors[2], colors[3], Lock.None);
-            map.Swap(1, 1, Width - 2, Height - 2);
+            level = new Level(7, 7, colors[0], colors[1], colors[2], colors[3], Lock.None);
+            level.Swap(1, 1, Width - 2, Height - 2);
+            
         }
 
-        private static void OnMapChanged()
-            => MapChanged?.Invoke();
+        private static void OnLevelChanged()
+            => LevelChanged?.Invoke();
 
         public static void Play()
         {
             Stage = Stage.Playing;
             var colors = GetRandomColors();
-            map = new Map(9, 10, colors[0], colors[1], colors[2], colors[3], Lock.Borders);
-            map.Randomize();
-            OnMapChanged();
+            level = new Level(9, 10, colors[0], colors[1], colors[2], colors[3], Lock.Borders);
+            level.Randomize();
+            OnLevelChanged();
         }
 
         private static List<Color> GetRandomColors()
@@ -73,15 +74,15 @@ namespace Paflamy
         }
 
         public static void Swap(int x1, int y1, int x2, int y2)
-            => map.Swap(x1, y1, x2, y2);
+            => level.Swap(x1, y1, x2, y2);
 
         public static Color Get(int x, int y)
-            => map.Get(x, y);
+            => level.Get(x, y);
 
         public static bool IsLocked(int x, int y)
-            => map.IsLocked(x, y);
+            => level.IsLocked(x, y);
 
         public static bool IsSolved
-            => map.IsSolved();
+            => level.IsSolved();
     }
 }

@@ -40,7 +40,7 @@ namespace Paflamy
             float bWidth = SCREEN_WIDTH / 3f;
             float bHeight = (SCREEN_HEIGHT - MenuTileSize * Game.Height) / 3;
             StartButton = new RectangleF(bWidth, MenuTileSize * Game.Height + bHeight, bWidth, bHeight);
-            Game.MapChanged += CalcTileSize;
+            Game.LevelChanged += CalcTileSize;
         }
 
         public static void CalcTileSize()
