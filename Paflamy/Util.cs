@@ -9,6 +9,7 @@ namespace Paflamy
     public static class Util
     {
         private const string DBG_TAG = "PAFLAMY";
+        public const bool DEBUG = true;
 
         public static readonly Random Random = new Random();
 

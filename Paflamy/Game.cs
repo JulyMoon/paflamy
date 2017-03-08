@@ -37,8 +37,7 @@ namespace Paflamy
 
         public static void Init(string levelSetRaw)
         {
-            var colors = GetRandomColors();
-            level = new Level(7, 7, colors[0], colors[1], colors[2], colors[3], TileLock.None);
+            level = LevelInfo.GetRandom(7, 7, TileLock.None).ToLevel();
             level.Swap(1, 1, Width - 2, Height - 2);
             levelSet = GetLevels(levelSetRaw);
         }
@@ -55,32 +54,15 @@ namespace Paflamy
         public static void Play()
         {
             Stage = Stage.Playing;
-            var colors = GetRandomColors();
-            //level = new Level(9, 10, colors[0], colors[1], colors[2], colors[3], TileLock.Borders);
-            level = levelSet[0].ToLevel();
-            level.Randomize();
-            OnLevelChanged();
+            NewLevel();
         }
 
-        private static List<Color> GetRandomColors()
+        public static void NewLevel()
         {
-            var colors = (KnownColor[])Enum.GetValues(typeof(KnownColor));
-
-            var nums = new List<int>();
-            for (int i = 0; i < 4; ++i)
-            {
-                int rand;
-                do
-                {
-                    rand = Util.Random.Next(colors.Length);
-                } while (nums.Contains(rand));
-                nums.Add(rand);
-            }
-
-            return new List<Color> { Color.FromKnownColor(colors[nums[0]]),
-                                     Color.FromKnownColor(colors[nums[1]]),
-                                     Color.FromKnownColor(colors[nums[2]]),
-                                     Color.FromKnownColor(colors[nums[3]]) };
+            level = LevelInfo.GetRandom().ToLevel();
+            //level = levelSet[0].ToLevel();
+            //level.Randomize();
+            OnLevelChanged();
         }
 
         public static void Swap(int x1, int y1, int x2, int y2)

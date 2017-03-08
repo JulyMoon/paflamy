@@ -43,7 +43,20 @@ namespace Paflamy
             if (e.Action != MotionEventActions.Down && e.Action != MotionEventActions.Up)
                 return;
 
-            Util.Log(Game.GetLevelString());
+            // DEBUG ZONE START
+
+            if (Util.DEBUG)
+            {
+                if (e.Action == MotionEventActions.Down)
+                {
+                    Util.Log(Game.GetLevelString());
+                    Game.NewLevel();
+                }
+                
+                return;
+            }
+
+            // DEBUG ZONE END
 
             float xx = mx - Graphics.HORI_BORDER;
             float yy = my - Graphics.VERT_BORDER;
