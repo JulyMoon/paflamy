@@ -27,6 +27,7 @@ namespace Paflamy
         public const float MENU_SCALE = 0.6f;
         public static float MENU_X_PADDING;
         public static float MENU_Y_PADDING;
+        public static float MENU_LEVEL_MARGIN;
 
         public static RectangleF StartButton { get; private set; }
         public static readonly Color StartColor = Color.DodgerBlue;
@@ -34,6 +35,8 @@ namespace Paflamy
         public static float TileWidth { get; private set; }
         public static float TileHeight { get; private set; }
         public static float MenuTileSize { get; private set; }
+
+        public static int MenuLevelIndex { get; private set; }
 
         private static List<Size> tileSizes;
 
@@ -47,6 +50,7 @@ namespace Paflamy
             MenuTileSize = TileWidth;
             MENU_X_PADDING = (1 - MENU_SCALE) / 2 * SCREEN_WIDTH;
             MENU_Y_PADDING = 0.15f * SCREEN_HEIGHT;
+            MENU_LEVEL_MARGIN = 0.09f * SCREEN_WIDTH;
 
             float bWidth = SCREEN_WIDTH / 3f;
             float bHeight = (SCREEN_HEIGHT - SCREEN_WIDTH) / 3f;
@@ -189,7 +193,19 @@ namespace Paflamy
 
         private static void DrawMenuStage()
         {
-            DrawLevel(Game.LevelSet[0], MENU_X_PADDING, MENU_Y_PADDING, tileSizes[0].Width, tileSizes[0].Height, MENU_SCALE);
+            for (int j = -1; j <= 1; ++j)
+            {
+                int i = MenuLevelIndex + j;
+                if (i >= 0 && i < Game.LevelSet.Count)
+                {
+                    DrawLevel(Game.LevelSet[i],
+                              MENU_X_PADDING + (SCREEN_WIDTH * MENU_SCALE + MENU_LEVEL_MARGIN) * j,
+                              MENU_Y_PADDING,
+                              tileSizes[i].Width,
+                              tileSizes[i].Height,
+                              MENU_SCALE);
+                }
+            }
         }
 
         public static void OnRender(double dt)
