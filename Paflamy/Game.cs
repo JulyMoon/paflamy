@@ -28,12 +28,12 @@ namespace Paflamy
         public static int Height => level.Height;
 
         public delegate void SimpleHandler();
-
         public static event SimpleHandler LevelChanged;
 
         private static Level level;
-
         private static List<LevelInfo> levelSet;
+
+        private static int levelIndex;
 
         public static void Init(string levelSetRaw)
         {
@@ -59,8 +59,8 @@ namespace Paflamy
 
         public static void NewLevel()
         {
-            level = LevelInfo.GetRandom().ToLevel();
-            //level = levelSet[0].ToLevel();
+            //level = LevelInfo.GetRandom().ToLevel();
+            level = levelSet[(levelIndex++) % levelSet.Count].ToLevel();
             //level.Randomize();
             OnLevelChanged();
         }

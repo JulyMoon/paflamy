@@ -37,18 +37,17 @@ namespace Paflamy
             Width = width;
             Height = height;
             TileLock = tileLock;
-            //Resources.System.GetString(Resource.String.LevelSet);
         }
 
         public Level ToLevel()
             => new Level(this);
 
-        private static Color[] GetRandomColors(int count)
+        private static Color[] GetRandomKnownColors(int count)
         {
             var colors = (KnownColor[])Enum.GetValues(typeof(KnownColor));
 
             var nums = new int[count];
-            for (int i = 0; i < count; ++i)
+            for (int i = 0; i < nums.Length; ++i)
             {
                 int rand;
                 do
@@ -61,8 +60,22 @@ namespace Paflamy
             return nums.Select(num => Color.FromKnownColor(colors[num])).ToArray();
         }
 
+        private static Color[] GetRandomColors(int count)
+        {
+            var colors = new Color[count];
+
+            for (int i = 0; i < colors.Length; ++i)
+            {
+                var bytes = new byte[3];
+                Util.Random.NextBytes(bytes);
+                colors[i] = Color.FromArgb(bytes[0], bytes[1], bytes[2]);
+            }
+
+            return colors;
+        }
+
         public static LevelInfo GetRandom()
-            => GetRandom(Util.Random.Next(8, 13), Util.Random.Next(8, 13), TileLock.Borders);
+            => GetRandom(9, 10, TileLock.Borders);
 
         public static LevelInfo GetRandom(int width, int height, TileLock tl)
         {

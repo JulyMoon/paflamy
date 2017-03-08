@@ -64,10 +64,10 @@ namespace Paflamy
 
         private static void DrawDrag()
         {
-            if (!Input.dragging)
+            if (!Input.Dragging)
                 return;
 
-            DrawRectangle(Input.mx - Input.dragOffsetX, Input.my - Input.dragOffsetY, TileWidth, TileHeight, Game.Get(Input.dragTileX, Input.dragTileY));
+            DrawRectangle(Input.MouseX - Input.DragOffsetX, Input.MouseY - Input.DragOffsetY, TileWidth, TileHeight, Game.Get(Input.DragTileX, Input.DragTileY));
         }
 
         private static void DrawMap()
@@ -77,7 +77,7 @@ namespace Paflamy
 
             for (int x = 0; x < Game.Width; ++x)
                 for (int y = 0; y < Game.Height; ++y)
-                    if (!Input.dragging || x != Input.dragTileX || y != Input.dragTileY)
+                    if (!Input.Dragging || x != Input.DragTileX || y != Input.DragTileY)
                         DrawGridTile(x, y);
 
             GL.PopMatrix();

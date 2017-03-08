@@ -15,16 +15,16 @@ namespace Paflamy
 {
     public static class Input
     {
-        public static float mx { get; private set; }
-        public static float my { get; private set; }
+        public static float MouseX { get; private set; }
+        public static float MouseY { get; private set; }
 
-        public static bool dragging { get; private set; }
+        public static bool Dragging { get; private set; }
 
-        public static int dragTileX { get; private set; }
-        public static int dragTileY { get; private set; }
+        public static int DragTileX { get; private set; }
+        public static int DragTileY { get; private set; }
 
-        public static float dragOffsetX { get; private set; }
-        public static float dragOffsetY { get; private set; }
+        public static float DragOffsetX { get; private set; }
+        public static float DragOffsetY { get; private set; }
 
         private static void HandleMenuTouch(MotionEvent e)
         {
@@ -37,8 +37,8 @@ namespace Paflamy
 
         private static void HandleGameTouch(MotionEvent e)
         {
-            mx = e.GetX();
-            my = e.GetY();
+            MouseX = e.GetX();
+            MouseY = e.GetY();
 
             if (e.Action != MotionEventActions.Down && e.Action != MotionEventActions.Up)
                 return;
@@ -49,8 +49,8 @@ namespace Paflamy
             {
                 if (e.Action == MotionEventActions.Down)
                 {
-                    Util.Log(Game.GetLevelString());
                     Game.NewLevel();
+                    Util.Log(Game.GetLevelString());
                 }
                 
                 return;
@@ -58,8 +58,8 @@ namespace Paflamy
 
             // DEBUG ZONE END
 
-            float xx = mx - Graphics.HORI_BORDER;
-            float yy = my - Graphics.VERT_BORDER;
+            float xx = MouseX - Graphics.HORI_BORDER;
+            float yy = MouseY - Graphics.VERT_BORDER;
 
             if (xx >= 0 && yy >= 0)
             {
@@ -72,35 +72,35 @@ namespace Paflamy
                 {
                     if (e.Action == MotionEventActions.Down)
                     {
-                        dragging = true;
-                        dragTileX = ix;
-                        dragTileY = iy;
-                        dragOffsetX = ox;
-                        dragOffsetY = oy;
+                        Dragging = true;
+                        DragTileX = ix;
+                        DragTileY = iy;
+                        DragOffsetX = ox;
+                        DragOffsetY = oy;
                     }
-                    else if (dragging) // this is NOT redundant
+                    else if (Dragging) // this is NOT redundant
                                        // start dragging a locked tile and drop on a regular one
                                        // in that case the event is up but we're not dragging anything
                     {
-                        dragging = false;
+                        Dragging = false;
 
-                        if (dragTileX != ix || dragTileY != iy)
+                        if (DragTileX != ix || DragTileY != iy)
                         {
-                            Game.Swap(dragTileX, dragTileY, ix, iy);
+                            Game.Swap(DragTileX, DragTileY, ix, iy);
                             if (Game.IsSolved)
                                 Util.Log("SOLVED");
                         }
                     }
 
                 }
-                else if (dragging)
+                else if (Dragging)
                 {
-                    dragging = false;
+                    Dragging = false;
                 }
             }
-            else if (dragging)
+            else if (Dragging)
             {
-                dragging = false;
+                Dragging = false;
             }
         }
 
