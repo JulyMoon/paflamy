@@ -38,15 +38,15 @@ namespace Paflamy
             MenuTileSize = TileWidth;
 
             float bWidth = SCREEN_WIDTH / 3f;
-            float bHeight = (SCREEN_HEIGHT - MenuTileSize * Game.Height) / 3;
-            StartButton = new RectangleF(bWidth, MenuTileSize * Game.Height + bHeight, bWidth, bHeight);
+            float bHeight = (SCREEN_HEIGHT - MenuTileSize * Game.Level.Height) / 3;
+            StartButton = new RectangleF(bWidth, MenuTileSize * Game.Level.Height + bHeight, bWidth, bHeight);
             Game.LevelChanged += CalcTileSize;
         }
 
         public static void CalcTileSize()
         {
-            TileWidth = (SCREEN_WIDTH - 2 * HORI_BORDER) / Game.Width;
-            TileHeight = (SCREEN_HEIGHT - 2 * VERT_BORDER) / Game.Height;
+            TileWidth = (SCREEN_WIDTH - 2 * HORI_BORDER) / Game.Level.Width;
+            TileHeight = (SCREEN_HEIGHT - 2 * VERT_BORDER) / Game.Level.Height;
         }
 
         public static void OnLoad()
@@ -67,16 +67,16 @@ namespace Paflamy
             if (!Input.Dragging)
                 return;
 
-            DrawRectangle(Input.MouseX - Input.DragOffsetX, Input.MouseY - Input.DragOffsetY, TileWidth, TileHeight, Game.Get(Input.DragTileX, Input.DragTileY));
+            DrawRectangle(Input.MouseX - Input.DragOffsetX, Input.MouseY - Input.DragOffsetY, TileWidth, TileHeight, Game.Level.Get(Input.DragTileX, Input.DragTileY));
         }
 
-        private static void DrawMap()
+        private static void DrawLevel()
         {
             GL.PushMatrix();
             GL.Translate(HORI_BORDER, VERT_BORDER, 0);
 
-            for (int x = 0; x < Game.Width; ++x)
-                for (int y = 0; y < Game.Height; ++y)
+            for (int x = 0; x < Game.Level.Width; ++x)
+                for (int y = 0; y < Game.Level.Height; ++y)
                     if (!Input.Dragging || x != Input.DragTileX || y != Input.DragTileY)
                         DrawGridTile(x, y);
 
@@ -85,9 +85,9 @@ namespace Paflamy
 
         private static void DrawGridTile(int x, int y)
         {
-            DrawRectangle(x * TileWidth, y * TileHeight, TileWidth, TileHeight, Game.Get(x, y));
+            DrawRectangle(x * TileWidth, y * TileHeight, TileWidth, TileHeight, Game.Level.Get(x, y));
 
-            if (Game.IsLocked(x, y))
+            if (Game.Level.IsLocked(x, y))
             {
                 GLColor4(Color.Black);
 
@@ -132,15 +132,15 @@ namespace Paflamy
 
         private static void DrawPlayingStage()
         {
-            DrawMap();
+            DrawLevel();
             DrawDrag();
         }
 
         private static void DrawStartStage()
         {
-            for (int x = 0; x < Game.Width; ++x)
-                for (int y = 0; y < Game.Height; ++y)
-                    DrawRectangle(x * MenuTileSize, y * MenuTileSize, MenuTileSize, MenuTileSize, Game.Get(x, y));
+            for (int x = 0; x < Game.Level.Width; ++x)
+                for (int y = 0; y < Game.Level.Height; ++y)
+                    DrawRectangle(x * MenuTileSize, y * MenuTileSize, MenuTileSize, MenuTileSize, Game.Level.Get(x, y));
 
             DrawRectangle(StartButton.X, StartButton.Y, StartButton.Width, StartButton.Height, StartColor);
         }

@@ -24,32 +24,30 @@ namespace Paflamy
     {
         public static Stage Stage { get; private set; } = Stage.Start;
 
-        public static int Width => level.Width;
-        public static int Height => level.Height;
-
         public delegate void SimpleHandler();
         public static event SimpleHandler LevelChanged;
 
-        private static Level level;
-        private static List<LevelInfo> levelSet;
+        public static Level Level { get; private set; }
+        private static List<Level> levelSet;
 
-        private static int levelIndex;
+        private static int currentLevelIndex;
 
         public static void Init(string levelSetRaw)
         {
-            level = LevelInfo.GetRandom(7, 7, TileLock.None).ToLevel();
-            level.Swap(1, 1, Width - 2, Height - 2);
-            levelSet = GetLevels(levelSetRaw);
+            SetLevel(LevelInfo.GetRandom(7, 7, TileLock.None).ToLevel());
+            Level.Swap(1, 1, Level.Width - 2, Level.Height - 2);
+            levelSet = GetLevelSet(levelSetRaw);
         }
 
-        public static string GetLevelString()
-            => level.Serialized();
+        private static void SetLevel(Level l)
+        {
+            Level = l;
+            //level.Randomize();
+            LevelChanged?.Invoke();
+        }
 
-        private static List<LevelInfo> GetLevels(string levelSetRaw)
-            => levelSetRaw.Trim().Split(' ').Select(raw => LevelInfo.Deserialize(raw)).ToList();
-
-        private static void OnLevelChanged()
-            => LevelChanged?.Invoke();
+        private static List<Level> GetLevelSet(string levelSetRaw)
+            => levelSetRaw.Trim().Split(' ').Select(raw => LevelInfo.Deserialize(raw).ToLevel()).ToList();
 
         public static void Play()
         {
@@ -59,22 +57,7 @@ namespace Paflamy
 
         public static void NewLevel()
         {
-            //level = LevelInfo.GetRandom().ToLevel();
-            level = levelSet[(levelIndex++) % levelSet.Count].ToLevel();
-            //level.Randomize();
-            OnLevelChanged();
+            SetLevel(levelSet[(currentLevelIndex++) % levelSet.Count]);
         }
-
-        public static void Swap(int x1, int y1, int x2, int y2)
-            => level.Swap(x1, y1, x2, y2);
-
-        public static Color Get(int x, int y)
-            => level.Get(x, y);
-
-        public static bool IsLocked(int x, int y)
-            => level.IsLocked(x, y);
-
-        public static bool IsSolved
-            => level.IsSolved();
     }
 }

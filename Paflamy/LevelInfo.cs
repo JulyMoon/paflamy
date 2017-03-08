@@ -39,6 +39,9 @@ namespace Paflamy
             TileLock = tileLock;
         }
 
+        public LevelInfo(LevelInfo li) : this(li.Width, li.Height, li.TopLeft, li.TopRight, li.BottomRight, li.BottomLeft, li.TileLock)
+        { }
+
         public Level ToLevel()
             => new Level(this);
 

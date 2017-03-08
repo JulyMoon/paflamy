@@ -50,7 +50,7 @@ namespace Paflamy
                 if (e.Action == MotionEventActions.Down)
                 {
                     Game.NewLevel();
-                    Util.Log(Game.GetLevelString());
+                    Util.Log(Game.Level.Serialized());
                 }
                 
                 return;
@@ -68,7 +68,7 @@ namespace Paflamy
 
                 int ix = (int)(xx / Graphics.TileWidth);
                 int iy = (int)(yy / Graphics.TileHeight);
-                if (ix < Game.Width && iy < Game.Height && !Game.IsLocked(ix, iy))
+                if (ix < Game.Level.Width && iy < Game.Level.Height && !Game.Level.IsLocked(ix, iy))
                 {
                     if (e.Action == MotionEventActions.Down)
                     {
@@ -86,8 +86,8 @@ namespace Paflamy
 
                         if (DragTileX != ix || DragTileY != iy)
                         {
-                            Game.Swap(DragTileX, DragTileY, ix, iy);
-                            if (Game.IsSolved)
+                            Game.Level.Swap(DragTileX, DragTileY, ix, iy);
+                            if (Game.Level.IsSolved())
                                 Util.Log("SOLVED");
                         }
                     }
