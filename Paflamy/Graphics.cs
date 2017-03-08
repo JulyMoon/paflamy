@@ -64,52 +64,60 @@ namespace Paflamy
 
         private static void DrawDrag()
         {
-            if (!Input.Dragging)
-                return;
-
-            DrawRectangle(Input.MouseX - Input.DragOffsetX, Input.MouseY - Input.DragOffsetY, TileWidth, TileHeight, Game.Level.Get(Input.DragTileX, Input.DragTileY));
-        }
-
-        private static void DrawLevel()
-        {
             GL.PushMatrix();
-            GL.Translate(HORI_BORDER, VERT_BORDER, 0);
-
-            for (int x = 0; x < Game.Level.Width; ++x)
-                for (int y = 0; y < Game.Level.Height; ++y)
-                    if (!Input.Dragging || x != Input.DragTileX || y != Input.DragTileY)
-                        DrawGridTile(x, y);
+            GL.Translate(Input.MouseX - Input.DragOffsetX, Input.MouseY - Input.DragOffsetY, 0);
+            GL.Scale(TileWidth, TileHeight, 0);
+            
+            DrawTile(Input.DragTileX, Input.DragTileY);
 
             GL.PopMatrix();
         }
 
-        private static void DrawGridTile(int x, int y)
-        {
-            DrawRectangle(x * TileWidth, y * TileHeight, TileWidth, TileHeight, Game.Level.Get(x, y));
-
-            if (Game.Level.IsLocked(x, y))
-            {
-                GLColor4(Color.Black);
-
-                GL.EnableClientState(All.VertexArray);
-
-                var vertices = new float[]
-                {
-                    (x + 0.5f) * TileWidth, (y + 0.5f) * TileHeight
-                };
-
-                GL.VertexPointer(2, All.Float, 0, vertices);
-
-                GL.DrawArrays(All.Points, 0, 1);
-                GL.DisableClientState(All.VertexArray);
-            }
-        }
-
-        private static void DrawRectangle(float x, float y, float width, float height, Color color)
+        private static void DrawLevel(Level level, float xOffset, float yOffset, float tileWidth, float tileHeight)
         {
             GL.PushMatrix();
-            GL.Translate(x, y, 0);
+            GL.Translate(xOffset, yOffset, 0);
+            GL.Scale(tileWidth, tileWidth, 0);
 
+            for (int x = 0; x < Game.Level.Width; ++x)
+                for (int y = 0; y < Game.Level.Height; ++y)
+                    if (!Input.Dragging || x != Input.DragTileX || y != Input.DragTileY)
+                    {
+                        GL.PushMatrix();
+                        GL.Translate(x, y, 0);
+
+                        DrawTile(x, y);
+
+                        GL.PopMatrix();
+                    }
+
+            GL.PopMatrix();
+        }
+
+        private static void DrawTile(int x, int y)
+        {
+            DrawRectangle(Game.Level.Get(x, y));
+
+            if (Game.Level.IsLocked(x, y))
+                DrawLockedDot();
+        }
+
+        private static void DrawLockedDot()
+        {
+            GLColor4(Color.Black);
+
+            GL.EnableClientState(All.VertexArray);
+
+            var vertices = new float[] { 0.5f, 0.5f };
+
+            GL.VertexPointer(2, All.Float, 0, vertices);
+
+            GL.DrawArrays(All.Points, 0, 1);
+            GL.DisableClientState(All.VertexArray);
+        }
+
+        private static void DrawRectangle(Color color)
+        {
             GLColor4(color);
 
             GL.EnableClientState(All.VertexArray);
@@ -117,32 +125,36 @@ namespace Paflamy
             var vertices = new float[]
             {
                 0, 0,
-                width, 0,
-                0, height,
-                width, height
+                1, 0,
+                0, 1,
+                1, 1
             };
 
             GL.VertexPointer(2, All.Float, 0, vertices);
 
             GL.DrawArrays(All.TriangleStrip, 0, 4);
             GL.DisableClientState(All.VertexArray);
-
-            GL.PopMatrix();
         }
 
         private static void DrawPlayingStage()
         {
-            DrawLevel();
-            DrawDrag();
+            DrawLevel(Game.Level, HORI_BORDER, VERT_BORDER, TileWidth, TileHeight);
+
+            if (Input.Dragging)
+                DrawDrag();
         }
 
         private static void DrawStartStage()
         {
-            for (int x = 0; x < Game.Level.Width; ++x)
-                for (int y = 0; y < Game.Level.Height; ++y)
-                    DrawRectangle(x * MenuTileSize, y * MenuTileSize, MenuTileSize, MenuTileSize, Game.Level.Get(x, y));
+            DrawLevel(Game.Level, 0, 0, MenuTileSize, MenuTileSize);
 
-            DrawRectangle(StartButton.X, StartButton.Y, StartButton.Width, StartButton.Height, StartColor);
+            GL.PushMatrix();
+            GL.Translate(StartButton.X, StartButton.Y, 0);
+            GL.Scale(StartButton.Width, StartButton.Height, 0);
+
+            DrawRectangle(StartColor);
+
+            GL.PopMatrix();
         }
 
         public static void OnRender(double dt)
