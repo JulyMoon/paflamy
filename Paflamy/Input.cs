@@ -32,7 +32,6 @@ namespace Paflamy
                 Graphics.StartButton.IntersectsWith(new RectangleF(e.GetX(), e.GetY(), 1, 1)))
             {
                 Game.Play();
-                Graphics.CalcTileSize();
             }
         }
 
@@ -43,6 +42,8 @@ namespace Paflamy
 
             if (e.Action != MotionEventActions.Down && e.Action != MotionEventActions.Up)
                 return;
+
+            Util.Log(Game.GetLevelString());
 
             float xx = mx - Graphics.HORI_BORDER;
             float yy = my - Graphics.VERT_BORDER;

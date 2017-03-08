@@ -13,7 +13,7 @@ using Android.Widget;
 
 namespace Paflamy
 {
-    public enum Lock
+    public enum TileLock
     {
         None, Borders, Checkered
     }
@@ -24,7 +24,7 @@ namespace Paflamy
         private Color[,] tiles;
         private bool[,] locked;
 
-        public Level(int width, int height, Color topLeft, Color topRight, Color bottomRight, Color bottomLeft, Lock l) : base(width, height, topLeft, topRight, bottomRight, bottomLeft, l)
+        public Level(int width, int height, Color topLeft, Color topRight, Color bottomRight, Color bottomLeft, TileLock tileLock) : base(width, height, topLeft, topRight, bottomRight, bottomLeft, tileLock)
         {
             solution = new Color[Width, Height];
             tiles = new Color[Width, Height];
@@ -39,17 +39,17 @@ namespace Paflamy
                     int ax = x < Width / 2 ? x : Width - x - 1;
                     int ay = y < Height / 2 ? y : Height - y - 1;
 
-                    switch (l)
+                    switch (tileLock)
                     {
-                        case Lock.None: locked[x, y] = false; break;
-                        case Lock.Borders: locked[x, y] = ax == 0 || ay == 0; break;
-                        case Lock.Checkered: locked[x, y] = (ax + ay) % 2 == 0; break;
+                        case TileLock.None: locked[x, y] = false; break;
+                        case TileLock.Borders: locked[x, y] = ax == 0 || ay == 0; break;
+                        case TileLock.Checkered: locked[x, y] = (ax + ay) % 2 == 0; break;
                         default: throw new Exception();
                     }
                 }
         }
 
-        public Level(LevelInfo li) : this(li.Width, li.Height, li.TopLeft, li.TopRight, li.BottomRight, li.BottomLeft, li.Lock)
+        public Level(LevelInfo li) : this(li.Width, li.Height, li.TopLeft, li.TopRight, li.BottomRight, li.BottomLeft, li.TileLock)
         { }
         
         public void Randomize()

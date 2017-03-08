@@ -17,7 +17,7 @@ namespace Paflamy
     {
         public PaflamyView(Context context) : base(context)
         {
-            Game.Init();
+            Game.Init(context.Resources.GetString(Resource.String.LevelSet));
             Graphics.Init(Resources.DisplayMetrics.WidthPixels, Resources.DisplayMetrics.HeightPixels);
         }
 

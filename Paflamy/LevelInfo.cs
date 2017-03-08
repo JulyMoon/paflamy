@@ -10,6 +10,8 @@ using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using System.Drawing;
+using Android.Content.Res;
+using System.Collections;
 
 namespace Paflamy
 {
@@ -22,11 +24,11 @@ namespace Paflamy
 
         public readonly int Width, Height;
         
-        public readonly Lock Lock;
+        public readonly TileLock TileLock;
 
         private const char delim = ';';
 
-        public LevelInfo(int width, int height, Color topLeft, Color topRight, Color bottomRight, Color bottomLeft, Lock l)
+        public LevelInfo(int width, int height, Color topLeft, Color topRight, Color bottomRight, Color bottomLeft, TileLock tileLock)
         {
             TopLeft = topLeft;
             TopRight = topRight;
@@ -34,13 +36,17 @@ namespace Paflamy
             BottomLeft = bottomLeft;
             Width = width;
             Height = height;
-            Lock = l;
+            TileLock = tileLock;
+            //Resources.System.GetString(Resource.String.LevelSet);
         }
 
-        public string Serialize()
-            => $"{TopLeft.ToArgb()}{delim}{TopRight.ToArgb()}{delim}{BottomRight.ToArgb()}{delim}{BottomLeft.ToArgb()}{delim}{Width}{delim}{Height}{delim}{(int)Lock}";
+        public Level ToLevel()
+            => new Level(this);
 
-        public LevelInfo Deserialize(string s)
+        public string Serialized()
+            => $"{TopLeft.ToArgb()}{delim}{TopRight.ToArgb()}{delim}{BottomRight.ToArgb()}{delim}{BottomLeft.ToArgb()}{delim}{Width}{delim}{Height}{delim}{(int)TileLock}";
+
+        public static LevelInfo Deserialize(string s)
         {
             var split = s.Split(delim);
             return new LevelInfo(Int32.Parse(split[4]),
@@ -49,7 +55,7 @@ namespace Paflamy
                                  Color.FromArgb(Int32.Parse(split[1])),
                                  Color.FromArgb(Int32.Parse(split[2])),
                                  Color.FromArgb(Int32.Parse(split[3])),
-                                 (Lock)Int32.Parse(split[6]));
+                                 (TileLock)Int32.Parse(split[6]));
         }
     }
 }

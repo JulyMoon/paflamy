@@ -11,6 +11,7 @@ using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
+using Android.Content.Res;
 
 namespace Paflamy
 {
@@ -32,13 +33,21 @@ namespace Paflamy
 
         private static Level level;
 
-        public static void Init()
+        private static List<LevelInfo> levelSet;
+
+        public static void Init(string levelSetRaw)
         {
             var colors = GetRandomColors();
-            level = new Level(7, 7, colors[0], colors[1], colors[2], colors[3], Lock.None);
+            level = new Level(7, 7, colors[0], colors[1], colors[2], colors[3], TileLock.None);
             level.Swap(1, 1, Width - 2, Height - 2);
-            
+            levelSet = GetLevels(levelSetRaw);
         }
+
+        public static string GetLevelString()
+            => level.Serialized();
+
+        private static List<LevelInfo> GetLevels(string levelSetRaw)
+            => levelSetRaw.Trim().Split(' ').Select(raw => LevelInfo.Deserialize(raw)).ToList();
 
         private static void OnLevelChanged()
             => LevelChanged?.Invoke();
@@ -47,7 +56,8 @@ namespace Paflamy
         {
             Stage = Stage.Playing;
             var colors = GetRandomColors();
-            level = new Level(9, 10, colors[0], colors[1], colors[2], colors[3], Lock.Borders);
+            //level = new Level(9, 10, colors[0], colors[1], colors[2], colors[3], TileLock.Borders);
+            level = levelSet[0].ToLevel();
             level.Randomize();
             OnLevelChanged();
         }
