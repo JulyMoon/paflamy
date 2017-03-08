@@ -31,7 +31,7 @@ namespace Paflamy
             if (e.Action == MotionEventActions.Down &&
                 Graphics.StartButton.IntersectsWith(new RectangleF(e.GetX(), e.GetY(), 1, 1)))
             {
-                Game.Play();
+                Game.Start();
             }
         }
 
@@ -110,6 +110,7 @@ namespace Paflamy
             {
                 case Stage.Playing: HandleGameTouch(e); break;
                 case Stage.Start: HandleMenuTouch(e); break;
+                case Stage.Menu: break; // todo
                 default: throw new Exception();
             }
 

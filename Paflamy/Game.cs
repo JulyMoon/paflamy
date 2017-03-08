@@ -17,7 +17,7 @@ namespace Paflamy
 {
     public enum Stage
     {
-        Start, Playing
+        Start, Menu, Playing
     }
 
     public static class Game
@@ -28,7 +28,7 @@ namespace Paflamy
         public static event SimpleHandler LevelChanged;
 
         public static Level Level { get; private set; }
-        private static List<Level> levelSet;
+        public static List<Level> LevelSet;
 
         private static int currentLevelIndex;
 
@@ -36,7 +36,7 @@ namespace Paflamy
         {
             SetLevel(LevelInfo.GetRandom(7, 7, TileLock.None).ToLevel());
             Level.Swap(1, 1, Level.Width - 2, Level.Height - 2);
-            levelSet = GetLevelSet(levelSetRaw);
+            LevelSet = GetLevelSet(levelSetRaw);
         }
 
         private static void SetLevel(Level l)
@@ -55,9 +55,14 @@ namespace Paflamy
             NewLevel();
         }
 
+        public static void Start()
+        {
+            Stage = Stage.Menu;
+        }
+
         public static void NewLevel()
         {
-            SetLevel(levelSet[(currentLevelIndex++) % levelSet.Count]);
+            SetLevel(LevelSet[(currentLevelIndex++) % LevelSet.Count]);
         }
     }
 }
