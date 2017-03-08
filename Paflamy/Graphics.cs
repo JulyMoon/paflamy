@@ -37,6 +37,7 @@ namespace Paflamy
         public static float MenuTileSize { get; private set; }
 
         public static int MenuLevelIndex { get; private set; }
+        public static float MenuOffset { get; set; }
 
         private static List<Size> tileSizes;
 
@@ -199,7 +200,7 @@ namespace Paflamy
                 if (i >= 0 && i < Game.LevelSet.Count)
                 {
                     DrawLevel(Game.LevelSet[i],
-                              MENU_X_PADDING + (SCREEN_WIDTH * MENU_SCALE + MENU_LEVEL_MARGIN) * j,
+                              MENU_X_PADDING + (SCREEN_WIDTH * MENU_SCALE + MENU_LEVEL_MARGIN) * j + MenuOffset,
                               MENU_Y_PADDING,
                               tileSizes[i].Width,
                               tileSizes[i].Height,

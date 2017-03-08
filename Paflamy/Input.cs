@@ -26,7 +26,10 @@ namespace Paflamy
         public static float DragOffsetX { get; private set; }
         public static float DragOffsetY { get; private set; }
 
-        private static void HandleMenuTouch(MotionEvent e)
+        public static float MenuDragStart { get; private set; }
+        public static float MenuStartOffset { get; private set; }
+
+        private static void HandleStartTouch(MotionEvent e)
         {
             if (e.Action == MotionEventActions.Down &&
                 Graphics.StartButton.IntersectsWith(new RectangleF(e.GetX(), e.GetY(), 1, 1)))
@@ -104,13 +107,26 @@ namespace Paflamy
             }
         }
 
+        private static void HandleMenuTouch(MotionEvent e)
+        {
+            if (e.Action == MotionEventActions.Down)
+            {
+                MenuDragStart = e.GetX();
+                MenuStartOffset = Graphics.MenuOffset;
+            }
+            else if (e.Action == MotionEventActions.Move)
+            {
+                Graphics.MenuOffset = MenuStartOffset + e.GetX() - MenuDragStart;
+            }
+        }
+
         public static bool OnTouch(MotionEvent e)
         {
             switch (Game.Stage)
             {
                 case Stage.Playing: HandleGameTouch(e); break;
-                case Stage.Start: HandleMenuTouch(e); break;
-                case Stage.Menu: break; // todo
+                case Stage.Start: HandleStartTouch(e); break;
+                case Stage.Menu: HandleMenuTouch(e); break;
                 default: throw new Exception();
             }
 
