@@ -26,6 +26,7 @@ namespace Paflamy
 
         public delegate void SimpleHandler();
         public static event SimpleHandler LevelChanged;
+        public static event SimpleHandler StageChanged;
 
         public static Level Level { get; private set; }
         public static List<Level> LevelSet;
@@ -53,16 +54,21 @@ namespace Paflamy
         {
             Stage = Stage.Playing;
             NewLevel();
+            OnStageChanged();
         }
 
         public static void Start()
         {
             Stage = Stage.Menu;
+            OnStageChanged();
         }
 
         public static void NewLevel()
         {
             SetLevel(LevelSet[(currentLevelIndex++) % LevelSet.Count]);
         }
+
+        private static void OnStageChanged()
+            => StageChanged?.Invoke();
     }
 }

@@ -28,6 +28,12 @@ namespace Paflamy
 
         public static float MenuDragStart { get; private set; }
         public static float MenuStartOffset { get; private set; }
+        public static float LastOffsetDelta { get; private set; }
+
+        public static void Init()
+        {
+            Game.StageChanged += (() => { Dragging = false; } );
+        }
 
         private static void HandleStartTouch(MotionEvent e)
         {
@@ -109,6 +115,8 @@ namespace Paflamy
 
         private static void HandleMenuTouch(MotionEvent e)
         {
+            Dragging = e.Action != MotionEventActions.Up;
+
             if (e.Action == MotionEventActions.Down)
             {
                 MenuDragStart = e.GetX();
@@ -116,7 +124,8 @@ namespace Paflamy
             }
             else if (e.Action == MotionEventActions.Move)
             {
-                Graphics.MenuOffset = MenuStartOffset + e.GetX() - MenuDragStart;
+                LastOffsetDelta = e.GetX() - MenuDragStart;
+                Graphics.MenuOffset = MenuStartOffset + LastOffsetDelta;
             }
         }
 

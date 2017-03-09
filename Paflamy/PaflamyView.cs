@@ -42,6 +42,13 @@ namespace Paflamy
             SwapBuffers();
         }
 
+        protected override void OnUpdateFrame(FrameEventArgs e)
+        {
+            base.OnUpdateFrame(e);
+
+            Graphics.OnUpdate(e.Time);
+        }
+
         protected override void CreateFrameBuffer()
         {
             try

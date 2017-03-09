@@ -24,10 +24,13 @@ namespace Paflamy
         public const float HORI_BORDER = 0;
         public const float VERT_BORDER = 0;
 
-        public const float MENU_SCALE = 0.6f;
+        public const float MENU_LEVEL_SCALE = 0.6f;
         public static float MENU_X_PADDING;
         public static float MENU_Y_PADDING;
         public static float MENU_LEVEL_MARGIN;
+        public static float MENU_LEVEL_DIST;
+        public static float MENU_LEVEL_WIDTH;
+        public const int MENU_NEIGHBOR_COUNT = 2;
 
         public static RectangleF StartButton { get; private set; }
         public static readonly Color StartColor = Color.DodgerBlue;
@@ -39,6 +42,8 @@ namespace Paflamy
         public static int MenuLevelIndex { get; private set; }
         public static float MenuOffset { get; set; }
 
+        //public static float AnimationProgress { get; private set; }
+
         private static List<Size> tileSizes;
 
         public static void Init(int width, int height)
@@ -49,9 +54,11 @@ namespace Paflamy
             SetTileSize();
 
             MenuTileSize = TileWidth;
-            MENU_X_PADDING = (1 - MENU_SCALE) / 2 * SCREEN_WIDTH;
+            MENU_X_PADDING = (1 - MENU_LEVEL_SCALE) / 2 * SCREEN_WIDTH;
             MENU_Y_PADDING = 0.15f * SCREEN_HEIGHT;
             MENU_LEVEL_MARGIN = 0.09f * SCREEN_WIDTH;
+            MENU_LEVEL_WIDTH = SCREEN_WIDTH * MENU_LEVEL_SCALE;
+            MENU_LEVEL_DIST = MENU_LEVEL_WIDTH + MENU_LEVEL_MARGIN;
 
             float bWidth = SCREEN_WIDTH / 3f;
             float bHeight = (SCREEN_HEIGHT - SCREEN_WIDTH) / 3f;
@@ -112,7 +119,7 @@ namespace Paflamy
 
             for (int x = 0; x < level.Width; ++x)
                 for (int y = 0; y < level.Height; ++y)
-                    if (!Input.Dragging || x != Input.DragTileX || y != Input.DragTileY)
+                    if (Game.Stage != Stage.Playing || !Input.Dragging || x != Input.DragTileX || y != Input.DragTileY)
                     {
                         GL.PushMatrix();
                         GL.Translate(x, y, 0);
@@ -194,18 +201,42 @@ namespace Paflamy
 
         private static void DrawMenuStage()
         {
-            for (int j = -1; j <= 1; ++j)
+            for (int j = -MENU_NEIGHBOR_COUNT; j <= MENU_NEIGHBOR_COUNT; ++j)
             {
                 int i = MenuLevelIndex + j;
                 if (i >= 0 && i < Game.LevelSet.Count)
                 {
                     DrawLevel(Game.LevelSet[i],
-                              MENU_X_PADDING + (SCREEN_WIDTH * MENU_SCALE + MENU_LEVEL_MARGIN) * j + MenuOffset,
+                              MENU_X_PADDING + MENU_LEVEL_DIST * j + MenuOffset,
                               MENU_Y_PADDING,
                               tileSizes[i].Width,
                               tileSizes[i].Height,
-                              MENU_SCALE);
+                              MENU_LEVEL_SCALE);
                 }
+            }
+        }
+
+        private static void UpdateMenuStage(double dt)
+        {
+            if (Input.Dragging || MenuOffset == 0)
+                return;
+            
+            int sign = Math.Sign(Input.LastOffsetDelta);
+
+            int moOldSign = Math.Sign(MenuOffset);
+            MenuOffset += 15 * sign;
+            int moNewSign = Math.Sign(MenuOffset);
+
+            Util.Log($"menu offset: {MenuOffset}, i: {MenuLevelIndex}");
+
+            if (Math.Abs(MenuOffset) > MENU_LEVEL_DIST / 2)
+            {
+                MenuLevelIndex -= sign;
+                MenuOffset = (MENU_LEVEL_DIST - Math.Abs(MenuOffset)) * Math.Sign(MenuOffset) * -1;
+            }
+            else if (moOldSign != moNewSign)
+            {
+                MenuOffset = 0;
             }
         }
 
@@ -218,6 +249,17 @@ namespace Paflamy
                 case Stage.Playing: DrawPlayingStage(); break;
                 case Stage.Menu: DrawMenuStage(); break;
                 case Stage.Start: DrawStartStage(); break;
+                default: throw new Exception();
+            }
+        }
+
+        public static void OnUpdate(double dt)
+        {
+            switch (Game.Stage)
+            {
+                case Stage.Playing: break;
+                case Stage.Menu: UpdateMenuStage(dt); break;
+                case Stage.Start: break;
                 default: throw new Exception();
             }
         }
