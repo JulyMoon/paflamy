@@ -31,6 +31,7 @@ namespace Paflamy
         public static float MENU_LEVEL_DIST;
         public static float MENU_LEVEL_WIDTH;
         public const int MENU_NEIGHBOR_COUNT = 2;
+        public const double MENU_SCROLL_TIME = 0.5;
 
         public static RectangleF StartButton { get; private set; }
         public static readonly Color StartColor = Color.DodgerBlue;
@@ -38,11 +39,17 @@ namespace Paflamy
         public static float TileWidth { get; private set; }
         public static float TileHeight { get; private set; }
         public static float MenuTileSize { get; private set; }
+        public static List<Size> TileSizes { get; private set; }
 
         public static int MenuLevelIndex { get; private set; }
         public static float MenuOffset { get; set; }
+        
+        private static bool prevDragging;
 
-        public static List<Size> TileSizes { get; private set; }
+        private static double scrollProgress;
+        private static int scrollStartIndex;
+        private static float scrollStartOffset;
+        private static int scrollEndIndex;
 
         public static void Init(int width, int height)
         {
@@ -84,28 +91,54 @@ namespace Paflamy
             height = (SCREEN_HEIGHT - 2 * VERT_BORDER) / level.Height;
         }
 
+        private static float Smooth(double x)
+             => (float)((1 - Math.Cos(Math.PI * x)) / 2);
+
+        private static void NormalizeOffset(int index, float offset, out int nIndex, out float nOffset)
+        {
+            float adjOffset = offset + MENU_LEVEL_DIST / 2;
+            nIndex = index + (int)(adjOffset / MENU_LEVEL_DIST) + (adjOffset < 0 ? -1 : 0);
+            nOffset = -((adjOffset % MENU_LEVEL_DIST) + (adjOffset < 0 ? MENU_LEVEL_DIST : 0) - MENU_LEVEL_DIST / 2);
+        }
+
+        private static float GetGlobalOffset(int index, float offset)
+            => index * MENU_LEVEL_DIST + offset;
+
         private static void UpdateMenuStage(double dt)
         {
-            if (Input.Dragging || MenuOffset == 0)
-                return;
-            
-            int sign = Math.Sign(Input.LastOffsetDelta);
-
-            int moOldSign = Math.Sign(MenuOffset);
-            MenuOffset += 15 * sign;
-            int moNewSign = Math.Sign(MenuOffset);
-
-            Util.Log($"menu offset: {MenuOffset}, i: {MenuLevelIndex}");
-
-            if (Math.Abs(MenuOffset) > MENU_LEVEL_DIST / 2)
+            if (!Input.Dragging && MenuOffset != 0)
             {
-                MenuLevelIndex -= sign;
-                MenuOffset = (MENU_LEVEL_DIST - Math.Abs(MenuOffset)) * Math.Sign(MenuOffset) * -1;
+                if (prevDragging)
+                {
+                    NormalizeOffset(MenuLevelIndex, MenuOffset, out scrollStartIndex, out scrollStartOffset);
+
+                    if (scrollStartIndex == MenuLevelIndex) //
+                        scrollEndIndex = scrollStartIndex - Math.Sign(Input.LastOffsetDelta);
+
+                    // 
+                }
+                else if (scrollProgress / MENU_SCROLL_TIME < 1)
+                {
+                    scrollProgress += dt;
+
+                    float globalStartOffset = GetGlobalOffset(scrollStartIndex, scrollStartOffset); //
+                    float globalEndOffset = GetGlobalOffset(scrollEndIndex, 0); // these should be set at the time of animation start instead of scrollX
+
+                    float nextGlobalOffset = globalStartOffset + Smooth(scrollProgress / MENU_SCROLL_TIME) * (globalEndOffset - globalStartOffset);
+                    NormalizeOffset(0, nextGlobalOffset, out int nIndex, out float nOffset);
+
+                    MenuLevelIndex = nIndex;
+                    MenuOffset = nOffset;
+                }
+                else
+                {
+                    MenuLevelIndex = scrollEndIndex;
+                    MenuOffset = 0;
+                    scrollProgress = 0;
+                }
             }
-            else if (moOldSign != moNewSign)
-            {
-                MenuOffset = 0;
-            }
+
+            prevDragging = Input.Dragging;
         }
 
         public static void OnUpdate(double dt)
