@@ -18,7 +18,7 @@ namespace Paflamy
         public PaflamyView(Context context) : base(context)
         {
             Game.Init(context.Resources.GetString(Resource.String.LevelSet));
-            Graphics.Init(Resources.DisplayMetrics.WidthPixels, Resources.DisplayMetrics.HeightPixels);
+            UI.Init(Resources.DisplayMetrics.WidthPixels, Resources.DisplayMetrics.HeightPixels);
         }
 
         protected override void OnLoad(EventArgs e)
@@ -46,7 +46,7 @@ namespace Paflamy
         {
             base.OnUpdateFrame(e);
 
-            Graphics.OnUpdate(e.Time);
+            UI.OnUpdate(e.Time);
         }
 
         protected override void CreateFrameBuffer()

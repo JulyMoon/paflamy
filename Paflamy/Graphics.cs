@@ -18,83 +18,15 @@ namespace Paflamy
 {
     public static class Graphics
     {
-        public static int SCREEN_WIDTH { get; private set; }
-        public static int SCREEN_HEIGHT { get; private set; }
-
-        public const float HORI_BORDER = 0;
-        public const float VERT_BORDER = 0;
-
-        public const float MENU_LEVEL_SCALE = 0.6f;
-        public static float MENU_X_PADDING;
-        public static float MENU_Y_PADDING;
-        public static float MENU_LEVEL_MARGIN;
-        public static float MENU_LEVEL_DIST;
-        public static float MENU_LEVEL_WIDTH;
-        public const int MENU_NEIGHBOR_COUNT = 2;
-
-        public static RectangleF StartButton { get; private set; }
-        public static readonly Color StartColor = Color.DodgerBlue;
-
-        public static float TileWidth { get; private set; }
-        public static float TileHeight { get; private set; }
-        public static float MenuTileSize { get; private set; }
-
-        public static int MenuLevelIndex { get; private set; }
-        public static float MenuOffset { get; set; }
-
-        //public static float AnimationProgress { get; private set; }
-
-        private static List<Size> tileSizes;
-
-        public static void Init(int width, int height)
-        {
-            SCREEN_WIDTH = width;
-            SCREEN_HEIGHT = height;
-
-            SetTileSize();
-
-            MenuTileSize = TileWidth;
-            MENU_X_PADDING = (1 - MENU_LEVEL_SCALE) / 2 * SCREEN_WIDTH;
-            MENU_Y_PADDING = 0.15f * SCREEN_HEIGHT;
-            MENU_LEVEL_MARGIN = 0.09f * SCREEN_WIDTH;
-            MENU_LEVEL_WIDTH = SCREEN_WIDTH * MENU_LEVEL_SCALE;
-            MENU_LEVEL_DIST = MENU_LEVEL_WIDTH + MENU_LEVEL_MARGIN;
-
-            float bWidth = SCREEN_WIDTH / 3f;
-            float bHeight = (SCREEN_HEIGHT - SCREEN_WIDTH) / 3f;
-            StartButton = new RectangleF(bWidth, SCREEN_WIDTH + bHeight, bWidth, bHeight);
-            Game.LevelChanged += SetTileSize;
-
-            tileSizes = new List<Size>();
-            foreach (var level in Game.LevelSet)
-            {
-                GetTileSize(level, out float w, out float h);
-                tileSizes.Add(new Size(w, h));
-            }
-        }
-
-        private static void SetTileSize()
-        {
-            GetTileSize(Game.Level, out float tileWidth, out float tileHeight);
-            TileWidth = tileWidth;
-            TileHeight = tileHeight;
-        }
-
-        private static void GetTileSize(Level level, out float width, out float height)
-        {
-            width = (SCREEN_WIDTH - 2 * HORI_BORDER) / level.Width;
-            height = (SCREEN_HEIGHT - 2 * VERT_BORDER) / level.Height;
-        }
-
         public static void OnLoad()
         {
-            Util.Log($"w: {SCREEN_WIDTH}, h: {SCREEN_HEIGHT}");
+            //Util.Log($"w: {UI.SCREEN_WIDTH}, h: {UI.SCREEN_HEIGHT}");
 
             GL.ClearColor(247f / 255, 239f / 255, 210f / 255, 1);
-            GL.PointSize(Math.Min(SCREEN_WIDTH, SCREEN_HEIGHT) * 0.009f);
+            GL.PointSize(Math.Min(UI.SCREEN_WIDTH, UI.SCREEN_HEIGHT) * 0.009f);
             GL.MatrixMode(All.Projection);
             GL.LoadIdentity();
-            GL.Ortho(0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, -1, 1);
+            GL.Ortho(0, UI.SCREEN_WIDTH, UI.SCREEN_HEIGHT, 0, -1, 1);
             GL.MatrixMode(All.Modelview);
             GL.LoadIdentity();
         }
@@ -103,8 +35,8 @@ namespace Paflamy
         {
             GL.PushMatrix();
             GL.Translate(Input.MouseX - Input.DragOffsetX, Input.MouseY - Input.DragOffsetY, 0);
-            GL.Scale(TileWidth, TileHeight, 1);
-            
+            GL.Scale(UI.TileWidth, UI.TileHeight, 1);
+
             DrawTile(Game.Level, Input.DragTileX, Input.DragTileY);
 
             GL.PopMatrix();
@@ -174,70 +106,15 @@ namespace Paflamy
             GL.DisableClientState(All.VertexArray);
         }
 
-        private static void DrawPlayingStage()
-        {
-            DrawLevel(Game.Level, HORI_BORDER, VERT_BORDER, TileWidth, TileHeight);
-
-            if (Input.Dragging)
-                DrawDrag();
-        }
-
-        private static void DrawStartStage()
-        {
-            DrawLevel(Game.Level, 0, 0, MenuTileSize, MenuTileSize);
-            DrawStartButton();
-        }
-
         private static void DrawStartButton()
         {
             GL.PushMatrix();
-            GL.Translate(StartButton.X, StartButton.Y, 0);
-            GL.Scale(StartButton.Width, StartButton.Height, 1);
+            GL.Translate(UI.StartButton.X, UI.StartButton.Y, 0);
+            GL.Scale(UI.StartButton.Width, UI.StartButton.Height, 1);
 
-            DrawRectangle(StartColor);
+            DrawRectangle(UI.StartColor);
 
             GL.PopMatrix();
-        }
-
-        private static void DrawMenuStage()
-        {
-            for (int j = -MENU_NEIGHBOR_COUNT; j <= MENU_NEIGHBOR_COUNT; ++j)
-            {
-                int i = MenuLevelIndex + j;
-                if (i >= 0 && i < Game.LevelSet.Count)
-                {
-                    DrawLevel(Game.LevelSet[i],
-                              MENU_X_PADDING + MENU_LEVEL_DIST * j + MenuOffset,
-                              MENU_Y_PADDING,
-                              tileSizes[i].Width,
-                              tileSizes[i].Height,
-                              MENU_LEVEL_SCALE);
-                }
-            }
-        }
-
-        private static void UpdateMenuStage(double dt)
-        {
-            if (Input.Dragging || MenuOffset == 0)
-                return;
-            
-            int sign = Math.Sign(Input.LastOffsetDelta);
-
-            int moOldSign = Math.Sign(MenuOffset);
-            MenuOffset += 15 * sign;
-            int moNewSign = Math.Sign(MenuOffset);
-
-            Util.Log($"menu offset: {MenuOffset}, i: {MenuLevelIndex}");
-
-            if (Math.Abs(MenuOffset) > MENU_LEVEL_DIST / 2)
-            {
-                MenuLevelIndex -= sign;
-                MenuOffset = (MENU_LEVEL_DIST - Math.Abs(MenuOffset)) * Math.Sign(MenuOffset) * -1;
-            }
-            else if (moOldSign != moNewSign)
-            {
-                MenuOffset = 0;
-            }
         }
 
         public static void OnRender(double dt)
@@ -253,14 +130,34 @@ namespace Paflamy
             }
         }
 
-        public static void OnUpdate(double dt)
+        private static void DrawPlayingStage()
         {
-            switch (Game.Stage)
+            DrawLevel(Game.Level, UI.HORI_BORDER, UI.VERT_BORDER, UI.TileWidth, UI.TileHeight);
+
+            if (Input.Dragging)
+                DrawDrag();
+        }
+
+        private static void DrawStartStage()
+        {
+            DrawLevel(Game.Level, 0, 0, UI.MenuTileSize, UI.MenuTileSize);
+            DrawStartButton();
+        }
+
+        private static void DrawMenuStage()
+        {
+            for (int j = -UI.MENU_NEIGHBOR_COUNT; j <= UI.MENU_NEIGHBOR_COUNT; ++j)
             {
-                case Stage.Playing: break;
-                case Stage.Menu: UpdateMenuStage(dt); break;
-                case Stage.Start: break;
-                default: throw new Exception();
+                int i = UI.MenuLevelIndex + j;
+                if (i >= 0 && i < Game.LevelSet.Count)
+                {
+                    DrawLevel(Game.LevelSet[i],
+                              UI.MENU_X_PADDING + UI.MENU_LEVEL_DIST * j + UI.MenuOffset,
+                              UI.MENU_Y_PADDING,
+                              UI.TileSizes[i].Width,
+                              UI.TileSizes[i].Height,
+                              UI.MENU_LEVEL_SCALE);
+                }
             }
         }
 

@@ -38,7 +38,7 @@ namespace Paflamy
         private static void HandleStartTouch(MotionEvent e)
         {
             if (e.Action == MotionEventActions.Down &&
-                Graphics.StartButton.IntersectsWith(new RectangleF(e.GetX(), e.GetY(), 1, 1)))
+                UI.StartButton.IntersectsWith(new RectangleF(e.GetX(), e.GetY(), 1, 1)))
             {
                 Game.Start();
             }
@@ -67,16 +67,16 @@ namespace Paflamy
 
             // DEBUG ZONE END
 
-            float xx = MouseX - Graphics.HORI_BORDER;
-            float yy = MouseY - Graphics.VERT_BORDER;
+            float xx = MouseX - UI.HORI_BORDER;
+            float yy = MouseY - UI.VERT_BORDER;
 
             if (xx >= 0 && yy >= 0)
             {
-                float ox = xx % Graphics.TileWidth;
-                float oy = yy % Graphics.TileHeight;
+                float ox = xx % UI.TileWidth;
+                float oy = yy % UI.TileHeight;
 
-                int ix = (int)(xx / Graphics.TileWidth);
-                int iy = (int)(yy / Graphics.TileHeight);
+                int ix = (int)(xx / UI.TileWidth);
+                int iy = (int)(yy / UI.TileHeight);
                 if (ix < Game.Level.Width && iy < Game.Level.Height && !Game.Level.IsLocked(ix, iy))
                 {
                     if (e.Action == MotionEventActions.Down)
@@ -120,12 +120,12 @@ namespace Paflamy
             if (e.Action == MotionEventActions.Down)
             {
                 MenuDragStart = e.GetX();
-                MenuStartOffset = Graphics.MenuOffset;
+                MenuStartOffset = UI.MenuOffset;
             }
             else if (e.Action == MotionEventActions.Move)
             {
                 LastOffsetDelta = e.GetX() - MenuDragStart;
-                Graphics.MenuOffset = MenuStartOffset + LastOffsetDelta;
+                UI.MenuOffset = MenuStartOffset + LastOffsetDelta;
             }
         }
 
