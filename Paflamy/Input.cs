@@ -117,15 +117,20 @@ namespace Paflamy
         {
             Dragging = e.Action != MotionEventActions.Up;
 
-            if (e.Action == MotionEventActions.Down)
+            switch (e.Action)
             {
-                MenuDragStart = e.GetX();
-                MenuStartOffset = UI.MenuOffset;
-            }
-            else if (e.Action == MotionEventActions.Move)
-            {
-                LastOffsetDelta = e.GetX() - MenuDragStart;
-                UI.MenuOffset = MenuStartOffset + LastOffsetDelta;
+                case MotionEventActions.Down:
+                    MenuDragStart = e.GetX();
+                    MenuStartOffset = UI.MenuOffset;
+                    LastOffsetDelta = 0;
+
+                    break;
+
+                case MotionEventActions.Move:
+                    LastOffsetDelta = e.GetX() - MenuDragStart;
+                    UI.MenuOffset = MenuStartOffset + LastOffsetDelta;
+
+                    break;
             }
         }
 

@@ -109,7 +109,7 @@ namespace Paflamy
         {
             if (!Input.Dragging && MenuOffset != 0)
             {
-                if (prevDragging)
+                if (prevDragging && Input.LastOffsetDelta != 0)
                 {
                     NormalizeOffset(MenuLevelIndex, MenuOffset, out scrollStartIndex, out scrollStartOffset);
                     scrollEndIndex = scrollStartIndex + (scrollStartIndex == MenuLevelIndex ? -Math.Sign(Input.LastOffsetDelta) : 0);
