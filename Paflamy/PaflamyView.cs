@@ -31,7 +31,7 @@ namespace Paflamy
         }
 
         public override bool OnTouchEvent(MotionEvent e)
-            => Input.OnTouch(e);
+            => UI.OnTouch(e);
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {

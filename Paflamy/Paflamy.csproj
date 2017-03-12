@@ -55,7 +55,6 @@
     <Compile Include="Game.cs" />
     <Compile Include="Graphics.cs" />
     <Compile Include="UI.cs" />
-    <Compile Include="Input.cs" />
     <Compile Include="LevelInfo.cs" />
     <Compile Include="MainActivity.cs" />
     <Compile Include="Level.cs" />

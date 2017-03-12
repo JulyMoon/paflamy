@@ -43,13 +43,27 @@ namespace Paflamy
 
         public static int MenuLevelIndex { get; private set; }
         public static float MenuOffset { get; set; }
-        
+
+        public static float MouseX { get; private set; }
+        public static float MouseY { get; private set; }
+
+        public static bool Dragging { get; private set; }
+
+        public static int DragTileX { get; private set; }
+        public static int DragTileY { get; private set; }
+
+        public static float DragOffsetX { get; private set; }
+        public static float DragOffsetY { get; private set; }
+
+        private static float menuDragStartX;
+        private static float menuStartOffset;
+        private static float menuLastOffset;
+
         private static bool prevDragging;
 
-        private static double scrollProgress;
-        private static int scrollStartIndex;
-        private static float scrollStartOffset;
-        private static int scrollEndIndex;
+        private static double menuScrollTime;
+        private static float menuScrollGlobalStartOffset;
+        private static float menuScrollGlobalEndOffset;
 
         public static void Init(int width, int height)
         {
@@ -107,23 +121,31 @@ namespace Paflamy
 
         private static void UpdateMenuStage(double dt)
         {
-            if (!Input.Dragging && MenuOffset != 0)
+            if (!Dragging && MenuOffset != 0)
             {
-                if (prevDragging && Input.LastOffsetDelta != 0)
+                if (prevDragging && menuLastOffset != 0)
                 {
-                    NormalizeOffset(MenuLevelIndex, MenuOffset, out scrollStartIndex, out scrollStartOffset);
-                    scrollEndIndex = scrollStartIndex + (scrollStartIndex == MenuLevelIndex ? -Math.Sign(Input.LastOffsetDelta) : 0);
-                    scrollProgress = 0;
+                    NormalizeOffset(MenuLevelIndex, MenuOffset, out int scrollStartIndex, out float scrollStartOffset);
+                    int scrollEndIndex = scrollStartIndex + (scrollStartIndex == MenuLevelIndex ? -Math.Sign(menuLastOffset) : 0);
+
+                    menuScrollGlobalStartOffset = GetGlobalOffset(scrollStartIndex, scrollStartOffset);
+                    menuScrollGlobalEndOffset = GetGlobalOffset(scrollEndIndex, 0);
+
+                    menuScrollTime = 0;
                 }
-                else if (scrollProgress / MENU_SCROLL_TIME < 1)
+                else if (menuScrollTime / MENU_SCROLL_TIME < 1)
                 {
-                    scrollProgress += dt;
-
-                    float globalStartOffset = GetGlobalOffset(scrollStartIndex, scrollStartOffset); //
-                    float globalEndOffset = GetGlobalOffset(scrollEndIndex, 0); // these should be set at the time of animation start instead of scrollX
-
-                    float nextGlobalOffset = globalStartOffset + Smooth(scrollProgress / MENU_SCROLL_TIME) * (globalEndOffset - globalStartOffset);
-                    NormalizeOffset(0, nextGlobalOffset, out int nIndex, out float nOffset);
+                    menuScrollTime += dt;
+                    
+                    // ----------
+                    NormalizeOffset
+                    (
+                        0,
+                        menuScrollGlobalStartOffset + Smooth(menuScrollTime / MENU_SCROLL_TIME) * (menuScrollGlobalEndOffset - menuScrollGlobalStartOffset),
+                        out int nIndex,
+                        out float nOffset
+                    );
+                    // ----------
 
                     MenuLevelIndex = nIndex;
                     MenuOffset = nOffset;
@@ -136,7 +158,7 @@ namespace Paflamy
                 }
             }
 
-            prevDragging = Input.Dragging;
+            prevDragging = Dragging;
         }
 
         public static void OnUpdate(double dt)
@@ -147,6 +169,116 @@ namespace Paflamy
                 case Stage.Menu: UpdateMenuStage(dt); break;
                 case Stage.Start: break;
                 default: throw new Exception();
+            }
+        }
+
+        public static bool OnTouch(MotionEvent e)
+        {
+            switch (Game.Stage)
+            {
+                case Stage.Playing: HandleGameTouch(e); break;
+                case Stage.Start: HandleStartTouch(e); break;
+                case Stage.Menu: HandleMenuTouch(e); break;
+                default: throw new Exception();
+            }
+
+            return true;
+        }
+
+
+        private static void HandleStartTouch(MotionEvent e)
+        {
+            if (e.Action == MotionEventActions.Down && StartButton.IntersectsWith(new RectangleF(e.GetX(), e.GetY(), 1, 1)))
+                Game.Start();
+        }
+
+        private static void HandleGameTouch(MotionEvent e)
+        {
+            MouseX = e.GetX();
+            MouseY = e.GetY();
+
+            if (e.Action != MotionEventActions.Down && e.Action != MotionEventActions.Up)
+                return;
+
+            // DEBUG ZONE START
+
+            if (Util.DEBUG)
+            {
+                if (e.Action == MotionEventActions.Down)
+                {
+                    Game.NewLevel();
+                    Util.Log(Game.Level.Serialized());
+                }
+
+                return;
+            }
+
+            // DEBUG ZONE END
+
+            float xx = MouseX - HORI_BORDER;
+            float yy = MouseY - VERT_BORDER;
+
+            if (xx >= 0 && yy >= 0)
+            {
+                float ox = xx % TileWidth;
+                float oy = yy % TileHeight;
+
+                int ix = (int)(xx / TileWidth);
+                int iy = (int)(yy / TileHeight);
+                if (ix < Game.Level.Width && iy < Game.Level.Height && !Game.Level.IsLocked(ix, iy))
+                {
+                    if (e.Action == MotionEventActions.Down)
+                    {
+                        Dragging = true;
+                        DragTileX = ix;
+                        DragTileY = iy;
+                        DragOffsetX = ox;
+                        DragOffsetY = oy;
+                    }
+                    else if (Dragging) // this is NOT redundant
+                                       // start dragging a locked tile and drop on a regular one
+                                       // in that case the event is up but we're not dragging anything
+                    {
+                        Dragging = false;
+
+                        if (DragTileX != ix || DragTileY != iy)
+                        {
+                            Game.Level.Swap(DragTileX, DragTileY, ix, iy);
+                            if (Game.Level.IsSolved())
+                                Util.Log("SOLVED");
+                        }
+                    }
+
+                }
+                else if (Dragging)
+                {
+                    Dragging = false;
+                }
+            }
+            else if (Dragging)
+            {
+                Dragging = false;
+            }
+        }
+
+        private static void HandleMenuTouch(MotionEvent e)
+        {
+            Dragging = e.Action != MotionEventActions.Up;
+
+            switch (e.Action)
+            {
+                case MotionEventActions.Down:
+                    menuDragStartX = e.GetX();
+                    menuStartOffset = MenuOffset;
+                    menuLastOffset = 0;
+
+                    break;
+
+                case MotionEventActions.Move:
+                    menuLastOffset = e.GetX() - menuDragStartX;
+                    MenuOffset = menuStartOffset + menuLastOffset;
+
+                    break;
             }
         }
     }

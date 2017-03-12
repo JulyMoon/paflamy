@@ -34,10 +34,10 @@ namespace Paflamy
         private static void DrawDrag()
         {
             GL.PushMatrix();
-            GL.Translate(Input.MouseX - Input.DragOffsetX, Input.MouseY - Input.DragOffsetY, 0);
+            GL.Translate(UI.MouseX - UI.DragOffsetX, UI.MouseY - UI.DragOffsetY, 0);
             GL.Scale(UI.TileWidth, UI.TileHeight, 1);
 
-            DrawTile(Game.Level, Input.DragTileX, Input.DragTileY);
+            DrawTile(Game.Level, UI.DragTileX, UI.DragTileY);
 
             GL.PopMatrix();
         }
@@ -51,7 +51,7 @@ namespace Paflamy
 
             for (int x = 0; x < level.Width; ++x)
                 for (int y = 0; y < level.Height; ++y)
-                    if (Game.Stage != Stage.Playing || !Input.Dragging || x != Input.DragTileX || y != Input.DragTileY)
+                    if (Game.Stage != Stage.Playing || !UI.Dragging || x != UI.DragTileX || y != UI.DragTileY)
                     {
                         GL.PushMatrix();
                         GL.Translate(x, y, 0);
@@ -134,7 +134,7 @@ namespace Paflamy
         {
             DrawLevel(Game.Level, UI.HORI_BORDER, UI.VERT_BORDER, UI.TileWidth, UI.TileHeight);
 
-            if (Input.Dragging)
+            if (UI.Dragging)
                 DrawDrag();
         }
 
