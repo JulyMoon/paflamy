@@ -92,17 +92,18 @@ namespace Paflamy
         }
 
         private static float Smooth(double x)
-             => (float)((1 - Math.Cos(Math.PI * x)) / 2);
+             => (float)Math.Sin(Math.PI / 2 * x); // => (float)((1 - Math.Cos(Math.PI * x)) / 2);
 
         private static void NormalizeOffset(int index, float offset, out int nIndex, out float nOffset)
         {
-            float adjOffset = offset + MENU_LEVEL_DIST / 2;
+            float adjOffset = -offset + MENU_LEVEL_DIST / 2;
+
             nIndex = index + (int)(adjOffset / MENU_LEVEL_DIST) + (adjOffset < 0 ? -1 : 0);
             nOffset = -((adjOffset % MENU_LEVEL_DIST) + (adjOffset < 0 ? MENU_LEVEL_DIST : 0) - MENU_LEVEL_DIST / 2);
         }
 
         private static float GetGlobalOffset(int index, float offset)
-            => index * MENU_LEVEL_DIST + offset;
+            => -index * MENU_LEVEL_DIST + offset;
 
         private static void UpdateMenuStage(double dt)
         {
@@ -111,11 +112,8 @@ namespace Paflamy
                 if (prevDragging)
                 {
                     NormalizeOffset(MenuLevelIndex, MenuOffset, out scrollStartIndex, out scrollStartOffset);
-
-                    if (scrollStartIndex == MenuLevelIndex) //
-                        scrollEndIndex = scrollStartIndex - Math.Sign(Input.LastOffsetDelta);
-
-                    // 
+                    scrollEndIndex = scrollStartIndex + (scrollStartIndex == MenuLevelIndex ? -Math.Sign(Input.LastOffsetDelta) : 0);
+                    scrollProgress = 0;
                 }
                 else if (scrollProgress / MENU_SCROLL_TIME < 1)
                 {
@@ -132,9 +130,9 @@ namespace Paflamy
                 }
                 else
                 {
-                    MenuLevelIndex = scrollEndIndex;
-                    MenuOffset = 0;
-                    scrollProgress = 0;
+                    MenuOffset = 0; // the smooth function brings it very close to 0 (due to float inaccuracy) at the end of the animation
+                                    // but I have to set to 0 here to avoid going into this 'if'
+                    //scrollProgress = 0; // isn't necessary
                 }
             }
 
