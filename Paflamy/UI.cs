@@ -128,6 +128,11 @@ namespace Paflamy
                     NormalizeOffset(MenuLevelIndex, MenuOffset, out int scrollStartIndex, out float scrollStartOffset);
                     int scrollEndIndex = scrollStartIndex + (scrollStartIndex == MenuLevelIndex ? -Math.Sign(menuLastOffset) : 0);
 
+                    if (scrollEndIndex < 0)
+                        scrollEndIndex = 0;
+                    else if (scrollEndIndex >= Game.LevelSet.Count)
+                        scrollEndIndex = Game.LevelSet.Count - 1;
+
                     menuScrollGlobalStartOffset = GetGlobalOffset(scrollStartIndex, scrollStartOffset);
                     menuScrollGlobalEndOffset = GetGlobalOffset(scrollEndIndex, 0);
 
@@ -184,7 +189,6 @@ namespace Paflamy
 
             return true;
         }
-
 
         private static void HandleStartTouch(MotionEvent e)
         {
