@@ -1,15 +1,10 @@
 using System;
-using System.Drawing;
 
 using OpenTK;
-using OpenTK.Graphics;
-using OpenTK.Graphics.ES11;
-using OpenTK.Platform;
 using OpenTK.Platform.Android;
 
 using Android.Views;
 using Android.Content;
-using Android.Util;
 
 namespace Paflamy
 {
