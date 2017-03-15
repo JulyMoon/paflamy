@@ -25,13 +25,14 @@ namespace Paflamy
         public const float VERT_BORDER = 0;
 
         public const float MENU_LEVEL_SCALE = 0.6f;
-        public float MENU_X_PADDING;
-        public float MENU_Y_PADDING;
-        public float MENU_LEVEL_MARGIN;
-        public float MENU_LEVEL_DIST;
-        public float MENU_LEVEL_WIDTH;
         public const int MENU_NEIGHBOR_COUNT = 2;
         public const double MENU_SCROLL_TIME = 0.5;
+        public float MENU_X_PADDING { get; private set; }
+        public float MENU_Y_PADDING { get; private set; }
+        public float MENU_LEVEL_MARGIN { get; private set; }
+        public float MENU_LEVEL_DIST { get; private set; }
+        public float MENU_LEVEL_WIDTH { get; private set; }
+        public double TAP_THRESHOLD_DIST { get; private set; }
 
         public RectangleF StartButton { get; private set; }
         public static readonly Color StartColor = Color.DodgerBlue;
@@ -56,6 +57,7 @@ namespace Paflamy
         public float DragOffsetY { get; private set; }
 
         private float menuDragStartX;
+        private float menuDragStartY;
         private float menuStartOffset;
         private float menuLastOffset;
 
@@ -83,6 +85,7 @@ namespace Paflamy
             MENU_LEVEL_MARGIN = 0.09f * SCREEN_WIDTH;
             MENU_LEVEL_WIDTH = SCREEN_WIDTH * MENU_LEVEL_SCALE;
             MENU_LEVEL_DIST = MENU_LEVEL_WIDTH + MENU_LEVEL_MARGIN;
+            TAP_THRESHOLD_DIST = 0.05f * SCREEN_WIDTH;
 
             float bWidth = SCREEN_WIDTH / 3f;
             float bHeight = (SCREEN_HEIGHT - SCREEN_WIDTH) / 3f;
@@ -263,6 +266,7 @@ namespace Paflamy
             {
                 case MotionEventActions.Down:
                     menuDragStartX = e.GetX();
+                    menuDragStartY = e.GetY();
                     menuStartOffset = MenuOffset;
                     menuLastOffset = 0;
                     tap = true;
@@ -271,8 +275,16 @@ namespace Paflamy
 
                 case MotionEventActions.Move:
                     menuLastOffset = e.GetX() - menuDragStartX;
-                    MenuOffset = menuStartOffset + menuLastOffset;
-                    tap = false;
+
+                    if (tap)
+                    {
+                        if (Math.Pow(menuLastOffset, 2) + Math.Pow(e.GetY() - menuDragStartY, 2) > Math.Pow(TAP_THRESHOLD_DIST, 2)) // tap &&
+                            tap = false;
+                    }
+                    else
+                    {
+                        MenuOffset = menuStartOffset + menuLastOffset;
+                    }
 
                     break;
 
