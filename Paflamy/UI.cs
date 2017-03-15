@@ -60,6 +60,7 @@ namespace Paflamy
         private static float menuLastOffset;
 
         private static bool prevDragging;
+        private static bool tap;
 
         private static double menuScrollTime;
         private static float menuScrollGlobalStartOffset;
@@ -204,21 +205,6 @@ namespace Paflamy
             if (e.Action != MotionEventActions.Down && e.Action != MotionEventActions.Up)
                 return;
 
-            // DEBUG ZONE START
-
-            if (Util.DEBUG)
-            {
-                if (e.Action == MotionEventActions.Down)
-                {
-                    Game.NewLevel();
-                    Util.Log(Game.Level.Serialized());
-                }
-
-                return;
-            }
-
-            // DEBUG ZONE END
-
             float xx = MouseX - HORI_BORDER;
             float yy = MouseY - VERT_BORDER;
 
@@ -275,12 +261,22 @@ namespace Paflamy
                     menuDragStartX = e.GetX();
                     menuStartOffset = MenuOffset;
                     menuLastOffset = 0;
+                    tap = true;
 
                     break;
 
                 case MotionEventActions.Move:
                     menuLastOffset = e.GetX() - menuDragStartX;
                     MenuOffset = menuStartOffset + menuLastOffset;
+                    tap = false;
+
+                    break;
+
+                case MotionEventActions.Up:
+                    if (tap)
+                    {
+                        Game.Play(MenuLevelIndex);
+                    }
 
                     break;
             }

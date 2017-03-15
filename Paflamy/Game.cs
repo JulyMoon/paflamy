@@ -31,29 +31,30 @@ namespace Paflamy
         public static Level Level { get; private set; }
         public static List<Level> LevelSet;
 
-        private static int currentLevelIndex;
-
         public static void Init(string levelSetRaw)
         {
-            SetLevel(LevelInfo.GetRandom(7, 7, TileLock.None).ToLevel());
+            SetLevel(LevelInfo.GetRandom(7, 7, TileLock.None).ToLevel(), false);
             Level.Swap(1, 1, Level.Width - 2, Level.Height - 2);
             LevelSet = GetLevelSet(levelSetRaw);
         }
 
-        private static void SetLevel(Level l)
+        private static void SetLevel(Level l, bool randomize = true)
         {
             Level = l;
-            //level.Randomize();
+
+            if (randomize)
+                Level.Randomize();
+
             LevelChanged?.Invoke();
         }
 
         private static List<Level> GetLevelSet(string levelSetRaw)
             => levelSetRaw.Trim().Split(' ').Select(raw => LevelInfo.Deserialize(raw).ToLevel()).ToList();
 
-        public static void Play()
+        public static void Play(int levelIndex)
         {
             Stage = Stage.Playing;
-            NewLevel();
+            SetLevel(LevelSet[levelIndex]);
             OnStageChanged();
         }
 
@@ -61,11 +62,6 @@ namespace Paflamy
         {
             Stage = Stage.Menu;
             OnStageChanged();
-        }
-
-        public static void NewLevel()
-        {
-            SetLevel(LevelSet[(currentLevelIndex++) % LevelSet.Count]);
         }
 
         private static void OnStageChanged()
