@@ -27,6 +27,7 @@ namespace Paflamy
         public const float MENU_LEVEL_SCALE = 0.6f;
         public const int MENU_NEIGHBOR_COUNT = 2;
         public const double MENU_SCROLL_TIME = 0.5;
+        public const double MENU_SNAP_TIME = 0.1;
         public float MENU_X_PADDING { get; private set; }
         public float MENU_Y_PADDING { get; private set; }
         public float MENU_LEVEL_MARGIN { get; private set; }
@@ -62,7 +63,10 @@ namespace Paflamy
         private float menuLastOffset;
 
         private bool prevDragging;
-        private bool tap;
+        private bool touchIsTap;
+
+        private double menuSnapTime;
+        private bool menuSnapOngoing;
 
         private double menuScrollTime;
         private float menuScrollGlobalStartOffset;
@@ -133,6 +137,8 @@ namespace Paflamy
             {
                 if (prevDragging && menuLastOffset != 0)
                 {
+                    menuSnapOngoing = false;
+
                     NormalizeOffset(MenuLevelIndex, MenuOffset, out int scrollStartIndex, out float scrollStartOffset);
                     int scrollEndIndex = scrollStartIndex + (scrollStartIndex == MenuLevelIndex ? -Math.Sign(menuLastOffset) : 0);
 
@@ -168,6 +174,18 @@ namespace Paflamy
                     MenuOffset = 0; // the smooth function brings it very close to 0 (due to float inaccuracy) at the end of the animation
                                     // but I have to set to 0 here to avoid going into this 'if'
                     //scrollProgress = 0; // isn't necessary
+                }
+            }
+            else if (menuSnapOngoing)
+            {
+                if (menuSnapTime / MENU_SNAP_TIME < 1)
+                {
+                    menuSnapTime += dt;
+                    MenuOffset = menuStartOffset + Smooth(menuSnapTime / MENU_SNAP_TIME) * menuLastOffset;
+                }
+                else
+                {
+                    menuSnapOngoing = false;
                 }
             }
 
@@ -269,19 +287,23 @@ namespace Paflamy
                     menuDragStartY = e.GetY();
                     menuStartOffset = MenuOffset;
                     menuLastOffset = 0;
-                    tap = true;
+                    touchIsTap = true;
 
                     break;
 
                 case MotionEventActions.Move:
                     menuLastOffset = e.GetX() - menuDragStartX;
 
-                    if (tap)
+                    if (touchIsTap)
                     {
                         if (Math.Pow(menuLastOffset, 2) + Math.Pow(e.GetY() - menuDragStartY, 2) > Math.Pow(TAP_THRESHOLD_DIST, 2)) // tap &&
-                            tap = false;
+                        {
+                            touchIsTap = false;
+                            menuSnapTime = 0;
+                            menuSnapOngoing = true;
+                        }
                     }
-                    else
+                    else if (!menuSnapOngoing)
                     {
                         MenuOffset = menuStartOffset + menuLastOffset;
                     }
@@ -289,7 +311,7 @@ namespace Paflamy
                     break;
 
                 case MotionEventActions.Up:
-                    if (tap)
+                    if (touchIsTap)
                     {
                         logic.Play(MenuLevelIndex);
                     }
