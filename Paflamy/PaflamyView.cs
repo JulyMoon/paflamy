@@ -15,29 +15,34 @@ namespace Paflamy
 {
     public class PaflamyView : AndroidGameView
     {
+        private readonly Logic logic;
+        private readonly UI ui;
+        private readonly Graphics graphics;
+
         public PaflamyView(Context context) : base(context)
         {
-            Game.Init(context.Resources.GetString(Resource.String.LevelSet));
-            UI.Init(Resources.DisplayMetrics.WidthPixels, Resources.DisplayMetrics.HeightPixels);
+            logic = new Logic(context.Resources.GetString(Resource.String.LevelSet));
+            ui = new UI(logic, Resources.DisplayMetrics.WidthPixels, Resources.DisplayMetrics.HeightPixels);
+            graphics = new Graphics(logic, ui);
         }
 
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
 
-            Graphics.OnLoad();
+            graphics.OnLoad();
 
             Run();
         }
 
         public override bool OnTouchEvent(MotionEvent e)
-            => UI.OnTouch(e);
+            => ui.OnTouch(e);
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             base.OnRenderFrame(e);
 
-            Graphics.OnRender(e.Time);
+            graphics.OnRender(e.Time);
 
             SwapBuffers();
         }
@@ -46,7 +51,7 @@ namespace Paflamy
         {
             base.OnUpdateFrame(e);
 
-            UI.OnUpdate(e.Time);
+            ui.OnUpdate(e.Time);
         }
 
         protected override void CreateFrameBuffer()

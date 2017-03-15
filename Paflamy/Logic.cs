@@ -20,25 +20,25 @@ namespace Paflamy
         Start, Menu, Playing
     }
 
-    public static class Game
+    public class Logic
     {
-        public static Stage Stage { get; private set; } = Stage.Start;
+        public Stage Stage { get; private set; } = Stage.Start;
 
         public delegate void SimpleHandler();
-        public static event SimpleHandler LevelChanged;
-        public static event SimpleHandler StageChanged;
+        public event SimpleHandler LevelChanged;
+        public event SimpleHandler StageChanged;
 
-        public static Level Level { get; private set; }
-        public static List<Level> LevelSet;
+        public Level Level { get; private set; }
+        public List<Level> LevelSet;
 
-        public static void Init(string levelSetRaw)
+        public Logic(string levelSetRaw)
         {
             SetLevel(LevelInfo.GetRandom(7, 7, TileLock.None).ToLevel(), false);
             Level.Swap(1, 1, Level.Width - 2, Level.Height - 2);
             LevelSet = GetLevelSet(levelSetRaw);
         }
 
-        private static void SetLevel(Level l, bool randomize = true)
+        private void SetLevel(Level l, bool randomize = true)
         {
             Level = l;
 
@@ -51,20 +51,20 @@ namespace Paflamy
         private static List<Level> GetLevelSet(string levelSetRaw)
             => levelSetRaw.Trim().Split(' ').Select(raw => LevelInfo.Deserialize(raw).ToLevel()).ToList();
 
-        public static void Play(int levelIndex)
+        public void Play(int levelIndex)
         {
             Stage = Stage.Playing;
             SetLevel(LevelSet[levelIndex]);
             OnStageChanged();
         }
 
-        public static void Start()
+        public void Start()
         {
             Stage = Stage.Menu;
             OnStageChanged();
         }
 
-        private static void OnStageChanged()
+        private void OnStageChanged()
             => StageChanged?.Invoke();
     }
 }

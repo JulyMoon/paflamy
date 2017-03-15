@@ -20,7 +20,7 @@ namespace Paflamy
         )]
     public class MainActivity : Activity
     {
-        PaflamyView view;
+        private PaflamyView view;
 
         protected override void OnCreate(Bundle bundle)
         {

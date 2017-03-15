@@ -16,33 +16,40 @@ using System.Linq;
 
 namespace Paflamy
 {
-    public static class Graphics
+    public class Graphics
     {
-        public static void OnLoad()
-        {
-            //Util.Log($"w: {UI.SCREEN_WIDTH}, h: {UI.SCREEN_HEIGHT}");
+        private readonly Logic logic;
+        private readonly UI ui;
 
+        public Graphics(Logic logic, UI ui)
+        {
+            this.logic = logic;
+            this.ui = ui;
+        }
+
+        public void OnLoad()
+        {
             GL.ClearColor(247f / 255, 239f / 255, 210f / 255, 1);
-            GL.PointSize(Math.Min(UI.SCREEN_WIDTH, UI.SCREEN_HEIGHT) * 0.009f);
+            GL.PointSize(Math.Min(ui.SCREEN_WIDTH, ui.SCREEN_HEIGHT) * 0.009f);
             GL.MatrixMode(All.Projection);
             GL.LoadIdentity();
-            GL.Ortho(0, UI.SCREEN_WIDTH, UI.SCREEN_HEIGHT, 0, -1, 1);
+            GL.Ortho(0, ui.SCREEN_WIDTH, ui.SCREEN_HEIGHT, 0, -1, 1);
             GL.MatrixMode(All.Modelview);
             GL.LoadIdentity();
         }
 
-        private static void DrawDrag()
+        private void DrawDrag()
         {
             GL.PushMatrix();
-            GL.Translate(UI.MouseX - UI.DragOffsetX, UI.MouseY - UI.DragOffsetY, 0);
-            GL.Scale(UI.TileWidth, UI.TileHeight, 1);
+            GL.Translate(ui.MouseX - ui.DragOffsetX, ui.MouseY - ui.DragOffsetY, 0);
+            GL.Scale(ui.TileWidth, ui.TileHeight, 1);
 
-            DrawTile(Game.Level, UI.DragTileX, UI.DragTileY);
+            DrawTile(logic.Level, ui.DragTileX, ui.DragTileY);
 
             GL.PopMatrix();
         }
 
-        private static void DrawLevel(Level level, float xOffset, float yOffset, float tileWidth, float tileHeight, float scale = 1)
+        private void DrawLevel(Level level, float xOffset, float yOffset, float tileWidth, float tileHeight, float scale = 1)
         {
             GL.PushMatrix();
             GL.Translate(xOffset, yOffset, 0);
@@ -51,7 +58,7 @@ namespace Paflamy
 
             for (int x = 0; x < level.Width; ++x)
                 for (int y = 0; y < level.Height; ++y)
-                    if (Game.Stage != Stage.Playing || !UI.Dragging || x != UI.DragTileX || y != UI.DragTileY)
+                    if (logic.Stage != Stage.Playing || !ui.Dragging || x != ui.DragTileX || y != ui.DragTileY)
                     {
                         GL.PushMatrix();
                         GL.Translate(x, y, 0);
@@ -106,22 +113,22 @@ namespace Paflamy
             GL.DisableClientState(All.VertexArray);
         }
 
-        private static void DrawStartButton()
+        private void DrawStartButton()
         {
             GL.PushMatrix();
-            GL.Translate(UI.StartButton.X, UI.StartButton.Y, 0);
-            GL.Scale(UI.StartButton.Width, UI.StartButton.Height, 1);
+            GL.Translate(ui.StartButton.X, ui.StartButton.Y, 0);
+            GL.Scale(ui.StartButton.Width, ui.StartButton.Height, 1);
 
             DrawRectangle(UI.StartColor);
 
             GL.PopMatrix();
         }
 
-        public static void OnRender(double dt)
+        public void OnRender(double dt)
         {
             GL.Clear((uint)All.ColorBufferBit);
 
-            switch (Game.Stage)
+            switch (logic.Stage)
             {
                 case Stage.Playing: DrawPlayingStage(); break;
                 case Stage.Menu: DrawMenuStage(); break;
@@ -130,32 +137,32 @@ namespace Paflamy
             }
         }
 
-        private static void DrawPlayingStage()
+        private void DrawPlayingStage()
         {
-            DrawLevel(Game.Level, UI.HORI_BORDER, UI.VERT_BORDER, UI.TileWidth, UI.TileHeight);
+            DrawLevel(logic.Level, UI.HORI_BORDER, UI.VERT_BORDER, ui.TileWidth, ui.TileHeight);
 
-            if (UI.Dragging)
+            if (ui.Dragging)
                 DrawDrag();
         }
 
-        private static void DrawStartStage()
+        private void DrawStartStage()
         {
-            DrawLevel(Game.Level, 0, 0, UI.MenuTileSize, UI.MenuTileSize);
+            DrawLevel(logic.Level, 0, 0, ui.MenuTileSize, ui.MenuTileSize);
             DrawStartButton();
         }
 
-        private static void DrawMenuStage()
+        private void DrawMenuStage()
         {
             for (int j = -UI.MENU_NEIGHBOR_COUNT; j <= UI.MENU_NEIGHBOR_COUNT; ++j)
             {
-                int i = UI.MenuLevelIndex + j;
-                if (i >= 0 && i < Game.LevelSet.Count)
+                int i = ui.MenuLevelIndex + j;
+                if (i >= 0 && i < logic.LevelSet.Count)
                 {
-                    DrawLevel(Game.LevelSet[i],
-                              UI.MENU_X_PADDING + UI.MENU_LEVEL_DIST * j + UI.MenuOffset,
-                              UI.MENU_Y_PADDING,
-                              UI.TileSizes[i].Width,
-                              UI.TileSizes[i].Height,
+                    DrawLevel(logic.LevelSet[i],
+                              ui.MENU_X_PADDING + ui.MENU_LEVEL_DIST * j + ui.MenuOffset,
+                              ui.MENU_Y_PADDING,
+                              ui.TileSizes[i].Width,
+                              ui.TileSizes[i].Height,
                               UI.MENU_LEVEL_SCALE);
                 }
             }

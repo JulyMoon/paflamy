@@ -16,58 +16,62 @@ using System.Linq;
 
 namespace Paflamy
 {
-    public static class UI
+    public class UI
     {
-        public static int SCREEN_WIDTH { get; private set; }
-        public static int SCREEN_HEIGHT { get; private set; }
+        public int SCREEN_WIDTH { get; private set; }
+        public int SCREEN_HEIGHT { get; private set; }
 
         public const float HORI_BORDER = 0;
         public const float VERT_BORDER = 0;
 
         public const float MENU_LEVEL_SCALE = 0.6f;
-        public static float MENU_X_PADDING;
-        public static float MENU_Y_PADDING;
-        public static float MENU_LEVEL_MARGIN;
-        public static float MENU_LEVEL_DIST;
-        public static float MENU_LEVEL_WIDTH;
+        public float MENU_X_PADDING;
+        public float MENU_Y_PADDING;
+        public float MENU_LEVEL_MARGIN;
+        public float MENU_LEVEL_DIST;
+        public float MENU_LEVEL_WIDTH;
         public const int MENU_NEIGHBOR_COUNT = 2;
         public const double MENU_SCROLL_TIME = 0.5;
 
-        public static RectangleF StartButton { get; private set; }
+        public RectangleF StartButton { get; private set; }
         public static readonly Color StartColor = Color.DodgerBlue;
 
-        public static float TileWidth { get; private set; }
-        public static float TileHeight { get; private set; }
-        public static float MenuTileSize { get; private set; }
-        public static List<Size> TileSizes { get; private set; }
+        public float TileWidth { get; private set; }
+        public float TileHeight { get; private set; }
+        public float MenuTileSize { get; private set; }
+        public List<Size> TileSizes { get; private set; }
 
-        public static int MenuLevelIndex { get; private set; }
-        public static float MenuOffset { get; set; }
+        public int MenuLevelIndex { get; private set; }
+        public float MenuOffset { get; set; }
 
-        public static float MouseX { get; private set; }
-        public static float MouseY { get; private set; }
+        public float MouseX { get; private set; }
+        public float MouseY { get; private set; }
 
-        public static bool Dragging { get; private set; }
+        public bool Dragging { get; private set; }
 
-        public static int DragTileX { get; private set; }
-        public static int DragTileY { get; private set; }
+        public int DragTileX { get; private set; }
+        public int DragTileY { get; private set; }
 
-        public static float DragOffsetX { get; private set; }
-        public static float DragOffsetY { get; private set; }
+        public float DragOffsetX { get; private set; }
+        public float DragOffsetY { get; private set; }
 
-        private static float menuDragStartX;
-        private static float menuStartOffset;
-        private static float menuLastOffset;
+        private float menuDragStartX;
+        private float menuStartOffset;
+        private float menuLastOffset;
 
-        private static bool prevDragging;
-        private static bool tap;
+        private bool prevDragging;
+        private bool tap;
 
-        private static double menuScrollTime;
-        private static float menuScrollGlobalStartOffset;
-        private static float menuScrollGlobalEndOffset;
+        private double menuScrollTime;
+        private float menuScrollGlobalStartOffset;
+        private float menuScrollGlobalEndOffset;
 
-        public static void Init(int width, int height)
+        private readonly Logic logic;
+
+        public UI(Logic logic, int width, int height)
         {
+            this.logic = logic;
+
             SCREEN_WIDTH = width;
             SCREEN_HEIGHT = height;
 
@@ -83,24 +87,24 @@ namespace Paflamy
             float bWidth = SCREEN_WIDTH / 3f;
             float bHeight = (SCREEN_HEIGHT - SCREEN_WIDTH) / 3f;
             StartButton = new RectangleF(bWidth, SCREEN_WIDTH + bHeight, bWidth, bHeight);
-            Game.LevelChanged += SetTileSize;
+            logic.LevelChanged += SetTileSize;
 
             TileSizes = new List<Size>();
-            foreach (var level in Game.LevelSet)
+            foreach (var level in logic.LevelSet)
             {
                 GetTileSize(level, out float w, out float h);
                 TileSizes.Add(new Size(w, h));
             }
         }
 
-        private static void SetTileSize()
+        private void SetTileSize()
         {
-            GetTileSize(Game.Level, out float tileWidth, out float tileHeight);
+            GetTileSize(logic.Level, out float tileWidth, out float tileHeight);
             TileWidth = tileWidth;
             TileHeight = tileHeight;
         }
 
-        private static void GetTileSize(Level level, out float width, out float height)
+        private void GetTileSize(Level level, out float width, out float height)
         {
             width = (SCREEN_WIDTH - 2 * HORI_BORDER) / level.Width;
             height = (SCREEN_HEIGHT - 2 * VERT_BORDER) / level.Height;
@@ -109,7 +113,7 @@ namespace Paflamy
         private static float Smooth(double x)
              => (float)Math.Sin(Math.PI / 2 * x); // => (float)((1 - Math.Cos(Math.PI * x)) / 2);
 
-        private static void NormalizeOffset(int index, float offset, out int nIndex, out float nOffset)
+        private void NormalizeOffset(int index, float offset, out int nIndex, out float nOffset)
         {
             float adjOffset = -offset + MENU_LEVEL_DIST / 2;
 
@@ -117,10 +121,10 @@ namespace Paflamy
             nOffset = -((adjOffset % MENU_LEVEL_DIST) + (adjOffset < 0 ? MENU_LEVEL_DIST : 0) - MENU_LEVEL_DIST / 2);
         }
 
-        private static float GetGlobalOffset(int index, float offset)
+        private float GetGlobalOffset(int index, float offset)
             => -index * MENU_LEVEL_DIST + offset;
 
-        private static void UpdateMenuStage(double dt)
+        private void UpdateMenuStage(double dt)
         {
             if (!Dragging && MenuOffset != 0)
             {
@@ -131,8 +135,8 @@ namespace Paflamy
 
                     if (scrollEndIndex < 0)
                         scrollEndIndex = 0;
-                    else if (scrollEndIndex >= Game.LevelSet.Count)
-                        scrollEndIndex = Game.LevelSet.Count - 1;
+                    else if (scrollEndIndex >= logic.LevelSet.Count)
+                        scrollEndIndex = logic.LevelSet.Count - 1;
 
                     menuScrollGlobalStartOffset = GetGlobalOffset(scrollStartIndex, scrollStartOffset);
                     menuScrollGlobalEndOffset = GetGlobalOffset(scrollEndIndex, 0);
@@ -167,9 +171,9 @@ namespace Paflamy
             prevDragging = Dragging;
         }
 
-        public static void OnUpdate(double dt)
+        public void OnUpdate(double dt)
         {
-            switch (Game.Stage)
+            switch (logic.Stage)
             {
                 case Stage.Playing: break;
                 case Stage.Menu: UpdateMenuStage(dt); break;
@@ -178,9 +182,9 @@ namespace Paflamy
             }
         }
 
-        public static bool OnTouch(MotionEvent e)
+        public bool OnTouch(MotionEvent e)
         {
-            switch (Game.Stage)
+            switch (logic.Stage)
             {
                 case Stage.Playing: HandleGameTouch(e); break;
                 case Stage.Start: HandleStartTouch(e); break;
@@ -191,13 +195,13 @@ namespace Paflamy
             return true;
         }
 
-        private static void HandleStartTouch(MotionEvent e)
+        private void HandleStartTouch(MotionEvent e)
         {
             if (e.Action == MotionEventActions.Down && StartButton.IntersectsWith(new RectangleF(e.GetX(), e.GetY(), 1, 1)))
-                Game.Start();
+                logic.Start();
         }
 
-        private static void HandleGameTouch(MotionEvent e)
+        private void HandleGameTouch(MotionEvent e)
         {
             MouseX = e.GetX();
             MouseY = e.GetY();
@@ -215,7 +219,7 @@ namespace Paflamy
 
                 int ix = (int)(xx / TileWidth);
                 int iy = (int)(yy / TileHeight);
-                if (ix < Game.Level.Width && iy < Game.Level.Height && !Game.Level.IsLocked(ix, iy))
+                if (ix < logic.Level.Width && iy < logic.Level.Height && !logic.Level.IsLocked(ix, iy))
                 {
                     if (e.Action == MotionEventActions.Down)
                     {
@@ -233,8 +237,8 @@ namespace Paflamy
 
                         if (DragTileX != ix || DragTileY != iy)
                         {
-                            Game.Level.Swap(DragTileX, DragTileY, ix, iy);
-                            if (Game.Level.IsSolved())
+                            logic.Level.Swap(DragTileX, DragTileY, ix, iy);
+                            if (logic.Level.IsSolved())
                                 Util.Log("SOLVED");
                         }
                     }
@@ -251,7 +255,7 @@ namespace Paflamy
             }
         }
 
-        private static void HandleMenuTouch(MotionEvent e)
+        private void HandleMenuTouch(MotionEvent e)
         {
             Dragging = e.Action != MotionEventActions.Up;
 
@@ -275,7 +279,7 @@ namespace Paflamy
                 case MotionEventActions.Up:
                     if (tap)
                     {
-                        Game.Play(MenuLevelIndex);
+                        logic.Play(MenuLevelIndex);
                     }
 
                     break;
