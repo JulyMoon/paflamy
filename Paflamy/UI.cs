@@ -12,8 +12,7 @@ namespace Paflamy
         public int SCREEN_WIDTH { get; private set; }
         public int SCREEN_HEIGHT { get; private set; }
 
-        public const float HORI_BORDER = 0;
-        public const float VERT_BORDER = 0;
+        public float LEVEL_VERTICAL_GAP { get; private set; }
 
         public const float MENU_LEVEL_SCALE = 0.6f;
         public const int MENU_NEIGHBOR_COUNT = 2;
@@ -28,6 +27,8 @@ namespace Paflamy
 
         public RectangleF StartButton { get; private set; }
         public static readonly Color StartColor = Color.DodgerBlue;
+        public static readonly Color PlayingColor = Color.Black;
+        public static readonly Color MenuColor = Color.FromArgb(247, 239, 210);
 
         public float TileWidth { get; private set; }
         public float TileHeight { get; private set; }
@@ -81,6 +82,7 @@ namespace Paflamy
             MENU_LEVEL_WIDTH = SCREEN_WIDTH * MENU_LEVEL_SCALE;
             MENU_LEVEL_DIST = MENU_LEVEL_WIDTH + MENU_LEVEL_MARGIN;
             TAP_THRESHOLD_DIST = 0.05f * SCREEN_WIDTH;
+            LEVEL_VERTICAL_GAP = 0.05f * SCREEN_HEIGHT;
 
             float bWidth = SCREEN_WIDTH / 3f;
             float bHeight = (SCREEN_HEIGHT - SCREEN_WIDTH) / 3f;
@@ -104,8 +106,8 @@ namespace Paflamy
 
         private void GetTileSize(Level level, out float width, out float height)
         {
-            width = (SCREEN_WIDTH - 2 * HORI_BORDER) / level.Width;
-            height = (SCREEN_HEIGHT - 2 * VERT_BORDER) / level.Height;
+            width = (float)SCREEN_WIDTH / level.Width;
+            height = (SCREEN_HEIGHT - 2 * LEVEL_VERTICAL_GAP) / level.Height;
         }
 
         private static float Smooth(double x)
@@ -221,8 +223,8 @@ namespace Paflamy
             if (e.Action != MotionEventActions.Down && e.Action != MotionEventActions.Up)
                 return;
 
-            float xx = MouseX - HORI_BORDER;
-            float yy = MouseY - VERT_BORDER;
+            float xx = MouseX;
+            float yy = MouseY - LEVEL_VERTICAL_GAP;
 
             if (xx >= 0 && yy >= 0)
             {

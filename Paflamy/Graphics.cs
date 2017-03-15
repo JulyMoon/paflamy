@@ -13,12 +13,19 @@ namespace Paflamy
         {
             this.logic = logic;
             this.ui = ui;
+            logic.StageChanged += HandleStageChange;
         }
+
+        private void HandleStageChange()
+            => GLClearColor(logic.Stage == Stage.Playing ? UI.PlayingColor : UI.MenuColor);
+
+        private static void GLClearColor(Color c)
+            => GL.ClearColor(c.R / (float)byte.MaxValue, c.G / (float)byte.MaxValue, c.B / (float)byte.MaxValue, 1);
 
         public void OnLoad()
         {
-            GL.ClearColor(247f / 255, 239f / 255, 210f / 255, 1);
-            GL.PointSize(Math.Min(ui.SCREEN_WIDTH, ui.SCREEN_HEIGHT) * 0.009f);
+            HandleStageChange();
+            GL.PointSize(ui.SCREEN_WIDTH * 0.009f);
             GL.MatrixMode(All.Projection);
             GL.LoadIdentity();
             GL.Ortho(0, ui.SCREEN_WIDTH, ui.SCREEN_HEIGHT, 0, -1, 1);
@@ -127,7 +134,7 @@ namespace Paflamy
 
         private void DrawPlayingStage()
         {
-            DrawLevel(logic.Level, UI.HORI_BORDER, UI.VERT_BORDER, ui.TileWidth, ui.TileHeight);
+            DrawLevel(logic.Level, 0, ui.LEVEL_VERTICAL_GAP, ui.TileWidth, ui.TileHeight);
 
             if (ui.Dragging)
                 DrawDrag();
