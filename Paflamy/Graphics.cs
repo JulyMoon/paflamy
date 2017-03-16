@@ -37,9 +37,9 @@ namespace Paflamy
         {
             GL.PushMatrix();
             GL.Translate(ui.MouseX - ui.DragOffsetX, ui.MouseY - ui.DragOffsetY, 0);
-            GL.Scale(ui.TileWidth, ui.TileHeight, 1);
+            GL.Scale(ui.TileSizes[logic.LevelIndex].Width, ui.TileSizes[logic.LevelIndex].Height, 1);
 
-            DrawTile(logic.Level, ui.DragTileX, ui.DragTileY);
+            DrawTile(logic.LevelSet[logic.LevelIndex], ui.DragTileX, ui.DragTileY);
 
             GL.PopMatrix();
         }
@@ -134,7 +134,7 @@ namespace Paflamy
 
         private void DrawPlayingStage()
         {
-            DrawLevel(logic.Level, 0, ui.LEVEL_VERTICAL_GAP, ui.TileWidth, ui.TileHeight);
+            DrawLevel(logic.LevelSet[logic.LevelIndex], 0, ui.LEVEL_VERTICAL_GAP, ui.TileSizes[logic.LevelIndex].Width, ui.TileSizes[logic.LevelIndex].Height);
 
             if (ui.Dragging)
                 DrawDrag();
@@ -142,7 +142,7 @@ namespace Paflamy
 
         private void DrawStartStage()
         {
-            DrawLevel(logic.Level, 0, 0, ui.MenuTileSize, ui.MenuTileSize);
+            DrawLevel(ui.StartLevel, 0, 0, ui.MenuTileSize, ui.MenuTileSize);
             DrawStartButton();
         }
 

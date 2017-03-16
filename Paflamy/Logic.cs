@@ -15,23 +15,21 @@ namespace Paflamy
         public delegate void SimpleHandler();
         public event SimpleHandler LevelChanged;
         public event SimpleHandler StageChanged;
-
-        public Level Level { get; private set; }
-        public List<Level> LevelSet;
+        
+        public List<Level> LevelSet { get; private set; }
+        public int LevelIndex { get; private set; }
 
         public Logic(string levelSetRaw)
         {
-            SetLevel(LevelInfo.GetRandom(7, 7, TileLock.None).ToLevel(), false);
-            Level.Swap(1, 1, Level.Width - 2, Level.Height - 2);
             LevelSet = GetLevelSet(levelSetRaw);
         }
 
-        private void SetLevel(Level l, bool randomize = true)
+        private void SetLevel(int levelIndex, bool randomize = true)
         {
-            Level = l;
+            LevelIndex = levelIndex;
 
             if (randomize)
-                Level.Randomize();
+                LevelSet[LevelIndex].Randomize();
 
             LevelChanged?.Invoke();
         }
@@ -42,7 +40,7 @@ namespace Paflamy
         public void Play(int levelIndex)
         {
             Stage = Stage.Playing;
-            SetLevel(LevelSet[levelIndex]);
+            SetLevel(levelIndex);
             OnStageChanged();
         }
 
