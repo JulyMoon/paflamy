@@ -21,6 +21,9 @@ namespace Paflamy
             graphics = new Graphics(logic, ui);
         }
 
+        public void Back()
+            => ui.Back();
+
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);

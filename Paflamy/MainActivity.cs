@@ -26,9 +26,7 @@ namespace Paflamy
         }
 
         public override void OnBackPressed()
-        {
-            //base.OnBackPressed();
-        }
+            => view.Back();
 
         protected override void OnPause()
         {

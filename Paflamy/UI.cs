@@ -80,7 +80,8 @@ namespace Paflamy
             StartLevel = LevelInfo.GetRandom(7, 7, TileLock.None).ToLevel();
             StartLevel.Swap(1, 1, StartLevel.Width - 2, StartLevel.Height - 2);
 
-            GetTileSize(StartLevel, out float MenuTileSize, out float _);
+            GetTileSize(StartLevel, out float mts, out float _);
+            MenuTileSize = mts;
 
             MENU_X_PADDING = (1 - MENU_LEVEL_SCALE) / 2 * SCREEN_WIDTH;
             MENU_Y_PADDING = 0.15f * SCREEN_HEIGHT;
@@ -101,6 +102,9 @@ namespace Paflamy
                 TileSizes.Add(new Size(w, h));
             }
         }
+
+        public void Back()
+            => ChangeStage(Stage.Menu);
 
         private void GetTileSize(Level level, out float width, out float height)
         {
