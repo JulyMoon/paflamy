@@ -10,15 +10,15 @@ namespace Paflamy
 {
     public class PaflamyView : AndroidGameView
     {
-        private readonly Logic logic;
+        private readonly Game game;
         private readonly UI ui;
         private readonly Graphics graphics;
 
         public PaflamyView(Context context) : base(context)
         {
-            logic = new Logic(context.Resources.GetString(Resource.String.LevelSet));
-            ui = new UI(logic, Resources.DisplayMetrics.WidthPixels, Resources.DisplayMetrics.HeightPixels);
-            graphics = new Graphics(logic, ui);
+            game = new Game(context.Resources.GetString(Resource.String.LevelSet));
+            ui = new UI(game, Resources.DisplayMetrics.WidthPixels, Resources.DisplayMetrics.HeightPixels);
+            graphics = new Graphics(game, ui);
         }
 
         public void Back()

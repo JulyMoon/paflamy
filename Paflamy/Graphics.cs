@@ -6,12 +6,12 @@ namespace Paflamy
 {
     public class Graphics
     {
-        private readonly Logic logic;
+        private readonly Game game;
         private readonly UI ui;
 
-        public Graphics(Logic logic, UI ui)
+        public Graphics(Game game, UI ui)
         {
-            this.logic = logic;
+            this.game = game;
             this.ui = ui;
             ui.StageChanged += HandleStageChange;
         }
@@ -37,9 +37,9 @@ namespace Paflamy
         {
             GL.PushMatrix();
             GL.Translate(ui.MouseX - ui.DragOffsetX, ui.MouseY - ui.DragOffsetY, 0);
-            GL.Scale(ui.TileSizes[logic.LevelIndex].Width, ui.TileSizes[logic.LevelIndex].Height, 1);
+            GL.Scale(ui.TileSizes[game.LevelIndex].Width, ui.TileSizes[game.LevelIndex].Height, 1);
 
-            DrawTile(logic.LevelSet[logic.LevelIndex], ui.DragTileX, ui.DragTileY);
+            DrawTile(game.LevelSet[game.LevelIndex], ui.DragTileX, ui.DragTileY);
 
             GL.PopMatrix();
         }
@@ -134,7 +134,7 @@ namespace Paflamy
 
         private void DrawPlayingStage()
         {
-            DrawLevel(logic.LevelSet[logic.LevelIndex], 0, ui.LEVEL_VERTICAL_GAP, ui.TileSizes[logic.LevelIndex].Width, ui.TileSizes[logic.LevelIndex].Height);
+            DrawLevel(game.LevelSet[game.LevelIndex], 0, ui.LEVEL_VERTICAL_GAP, ui.TileSizes[game.LevelIndex].Width, ui.TileSizes[game.LevelIndex].Height);
 
             if (ui.Dragging)
                 DrawDrag();
@@ -151,9 +151,9 @@ namespace Paflamy
             for (int j = -UI.MENU_NEIGHBOR_COUNT; j <= UI.MENU_NEIGHBOR_COUNT; ++j)
             {
                 int i = ui.MenuLevelIndex + j;
-                if (i >= 0 && i < logic.LevelSet.Count)
+                if (i >= 0 && i < game.LevelSet.Count)
                 {
-                    DrawLevel(logic.LevelSet[i],
+                    DrawLevel(game.LevelSet[i],
                               ui.MENU_X_PADDING + ui.MENU_LEVEL_DIST * j + ui.MenuOffset,
                               ui.MENU_Y_PADDING,
                               ui.TileSizes[i].Width,

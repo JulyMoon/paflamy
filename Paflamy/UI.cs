@@ -7,6 +7,11 @@ using Size = System.Drawing.SizeF;
 
 namespace Paflamy
 {
+    public enum Stage
+    {
+        Start, Menu, Playing
+    }
+
     public class UI
     {
         public int SCREEN_WIDTH { get; private set; }
@@ -68,11 +73,11 @@ namespace Paflamy
         private float menuScrollGlobalStartOffset;
         private float menuScrollGlobalEndOffset;
 
-        private readonly Logic logic;
+        private readonly Game game;
 
-        public UI(Logic logic, int width, int height)
+        public UI(Game game, int width, int height)
         {
-            this.logic = logic;
+            this.game = game;
 
             SCREEN_WIDTH = width;
             SCREEN_HEIGHT = height;
@@ -96,7 +101,7 @@ namespace Paflamy
             StartButton = new RectangleF(bWidth, SCREEN_WIDTH + bHeight, bWidth, bHeight);
 
             TileSizes = new List<Size>();
-            foreach (var level in logic.LevelSet)
+            foreach (var level in game.LevelSet)
             {
                 GetTileSize(level, out float w, out float h);
                 TileSizes.Add(new Size(w, h));
@@ -139,8 +144,8 @@ namespace Paflamy
 
                     if (scrollEndIndex < 0)
                         scrollEndIndex = 0;
-                    else if (scrollEndIndex >= logic.LevelSet.Count)
-                        scrollEndIndex = logic.LevelSet.Count - 1;
+                    else if (scrollEndIndex >= game.LevelSet.Count)
+                        scrollEndIndex = game.LevelSet.Count - 1;
 
                     menuScrollGlobalStartOffset = GetGlobalOffset(scrollStartIndex, scrollStartOffset);
                     menuScrollGlobalEndOffset = GetGlobalOffset(scrollEndIndex, 0);
@@ -236,12 +241,12 @@ namespace Paflamy
 
             if (xx >= 0 && yy >= 0)
             {
-                float ox = xx % TileSizes[logic.LevelIndex].Width;
-                float oy = yy % TileSizes[logic.LevelIndex].Height;
+                float ox = xx % TileSizes[game.LevelIndex].Width;
+                float oy = yy % TileSizes[game.LevelIndex].Height;
 
-                int ix = (int)(xx / TileSizes[logic.LevelIndex].Width);
-                int iy = (int)(yy / TileSizes[logic.LevelIndex].Height);
-                if (ix < logic.LevelSet[logic.LevelIndex].Width && iy < logic.LevelSet[logic.LevelIndex].Height && !logic.LevelSet[logic.LevelIndex].IsLocked(ix, iy))
+                int ix = (int)(xx / TileSizes[game.LevelIndex].Width);
+                int iy = (int)(yy / TileSizes[game.LevelIndex].Height);
+                if (ix < game.LevelSet[game.LevelIndex].Width && iy < game.LevelSet[game.LevelIndex].Height && !game.LevelSet[game.LevelIndex].IsLocked(ix, iy))
                 {
                     if (e.Action == MotionEventActions.Down)
                     {
@@ -259,8 +264,8 @@ namespace Paflamy
 
                         if (DragTileX != ix || DragTileY != iy)
                         {
-                            logic.LevelSet[logic.LevelIndex].Swap(DragTileX, DragTileY, ix, iy);
-                            if (logic.LevelSet[logic.LevelIndex].IsSolved())
+                            game.LevelSet[game.LevelIndex].Swap(DragTileX, DragTileY, ix, iy);
+                            if (game.LevelSet[game.LevelIndex].IsSolved())
                                 Util.Log("SOLVED");
                         }
                     }
@@ -314,7 +319,7 @@ namespace Paflamy
                 case MotionEventActions.Up:
                     if (touchIsTap)
                     {
-                        logic.LevelIndex = MenuLevelIndex;
+                        game.LevelIndex = MenuLevelIndex;
                         ChangeStage(Stage.Playing);
                     }
 

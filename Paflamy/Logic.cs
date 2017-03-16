@@ -3,17 +3,12 @@ using System.Linq;
 
 namespace Paflamy
 {
-    public enum Stage
-    {
-        Start, Menu, Playing
-    }
-
-    public class Logic
+    public class Game
     {
         public List<Level> LevelSet { get; private set; }
         public int LevelIndex { get; set; }
 
-        public Logic(string levelSetRaw)
+        public Game(string levelSetRaw)
         {
             LevelSet = GetLevelSet(levelSetRaw);
         }
