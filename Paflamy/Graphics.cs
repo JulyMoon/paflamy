@@ -13,11 +13,11 @@ namespace Paflamy
         {
             this.logic = logic;
             this.ui = ui;
-            logic.StageChanged += HandleStageChange;
+            ui.StageChanged += HandleStageChange;
         }
 
         private void HandleStageChange()
-            => GLClearColor(logic.Stage == Stage.Playing ? UI.PlayingColor : UI.MenuColor);
+            => GLClearColor(ui.Stage == Stage.Playing ? UI.PlayingColor : UI.MenuColor);
 
         private static void GLClearColor(Color c)
             => GL.ClearColor(c.R / (float)byte.MaxValue, c.G / (float)byte.MaxValue, c.B / (float)byte.MaxValue, 1);
@@ -53,7 +53,7 @@ namespace Paflamy
 
             for (int x = 0; x < level.Width; ++x)
                 for (int y = 0; y < level.Height; ++y)
-                    if (logic.Stage != Stage.Playing || !ui.Dragging || x != ui.DragTileX || y != ui.DragTileY)
+                    if (ui.Stage != Stage.Playing || !ui.Dragging || x != ui.DragTileX || y != ui.DragTileY)
                     {
                         GL.PushMatrix();
                         GL.Translate(x, y, 0);
@@ -123,7 +123,7 @@ namespace Paflamy
         {
             GL.Clear((uint)All.ColorBufferBit);
 
-            switch (logic.Stage)
+            switch (ui.Stage)
             {
                 case Stage.Playing: DrawPlayingStage(); break;
                 case Stage.Menu: DrawMenuStage(); break;

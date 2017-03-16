@@ -25,6 +25,11 @@ namespace Paflamy
         public float MENU_LEVEL_WIDTH { get; private set; }
         public double TAP_THRESHOLD_DIST { get; private set; }
 
+        public Stage Stage { get; private set; } = Stage.Start;
+
+        public delegate void SimpleHandler();
+        public event SimpleHandler StageChanged;
+
         public RectangleF StartButton { get; private set; }
         public static readonly Color StartColor = Color.DodgerBlue;
         public static readonly Color PlayingColor = Color.Black;
@@ -178,9 +183,15 @@ namespace Paflamy
             prevDragging = Dragging;
         }
 
+        private void ChangeStage(Stage stage)
+        {
+            Stage = stage;
+            StageChanged?.Invoke();
+        }
+
         public void OnUpdate(double dt)
         {
-            switch (logic.Stage)
+            switch (Stage)
             {
                 case Stage.Playing: break;
                 case Stage.Menu: UpdateMenuStage(dt); break;
@@ -191,7 +202,7 @@ namespace Paflamy
 
         public bool OnTouch(MotionEvent e)
         {
-            switch (logic.Stage)
+            switch (Stage)
             {
                 case Stage.Playing: HandleGameTouch(e); break;
                 case Stage.Start: HandleStartTouch(e); break;
@@ -205,7 +216,7 @@ namespace Paflamy
         private void HandleStartTouch(MotionEvent e)
         {
             if (e.Action == MotionEventActions.Down && StartButton.IntersectsWith(new RectangleF(e.GetX(), e.GetY(), 1, 1)))
-                logic.Start();
+                ChangeStage(Stage.Menu);
         }
 
         private void HandleGameTouch(MotionEvent e)
@@ -299,7 +310,8 @@ namespace Paflamy
                 case MotionEventActions.Up:
                     if (touchIsTap)
                     {
-                        logic.Play(MenuLevelIndex);
+                        logic.LevelIndex = MenuLevelIndex;
+                        ChangeStage(Stage.Playing);
                     }
 
                     break;
