@@ -171,8 +171,8 @@ namespace Paflamy
 
             GL.PushMatrix();
             GL.Scale(ui.SCREEN_WIDTH, ui.SCREEN_HEIGHT, 1);
-            
-            DrawRectangle(Color.FromArgb((int)(ui.MTPBackgroundCoverAlpha * Byte.MaxValue), Color.Black));
+
+            DrawRectangle(Color.FromArgb((int)(ui.MTPBackgroundCoverAlpha * Byte.MaxValue), UI.PlayingColor));
 
             GL.PopMatrix();
 

@@ -122,7 +122,14 @@ namespace Paflamy
         }
 
         public void Back()
-            => ChangeStage(Stage.Menu);
+        {
+            if (Stage == Stage.Playing)
+            {
+                MenuToPlaying = false;
+                MenuOffset = 0;
+                ChangeStage(Stage.Menu);
+            }
+        }
 
         private void GetTileSize(Level level, out float width, out float height)
         {
@@ -217,7 +224,6 @@ namespace Paflamy
                 else
                 {
                     ChangeStage(Stage.Playing);
-                    MenuToPlaying = false;
                 }
             }
             else
