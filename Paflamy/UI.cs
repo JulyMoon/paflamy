@@ -1,114 +1,146 @@
 using System;
 using System.Drawing;
 
-using OpenTK;
-using OpenTK.Graphics;
-using OpenTK.Graphics.ES11;
-using OpenTK.Platform;
-using OpenTK.Platform.Android;
-
 using Android.Views;
-using Android.Content;
-using Android.Util;
 using System.Collections.Generic;
 using Size = System.Drawing.SizeF;
-using System.Linq;
 
 namespace Paflamy
 {
-    public static class UI
+    public enum Stage
     {
-        public static int SCREEN_WIDTH { get; private set; }
-        public static int SCREEN_HEIGHT { get; private set; }
+        Start, Menu, Playing
+    }
 
-        public const float HORI_BORDER = 0;
-        public const float VERT_BORDER = 0;
+    public class UI
+    {
+        public int SCREEN_WIDTH { get; private set; }
+        public int SCREEN_HEIGHT { get; private set; }
+
+        public float LEVEL_VERTICAL_GAP { get; private set; }
 
         public const float MENU_LEVEL_SCALE = 0.6f;
-        public static float MENU_X_PADDING;
-        public static float MENU_Y_PADDING;
-        public static float MENU_LEVEL_MARGIN;
-        public static float MENU_LEVEL_DIST;
-        public static float MENU_LEVEL_WIDTH;
         public const int MENU_NEIGHBOR_COUNT = 2;
         public const double MENU_SCROLL_TIME = 0.5;
+        public const double MENU_SNAP_TIME = 0.1;
+        public const double MTP_FADEOUT_TIME = 0.3; // mtp = menu-to-playing transition
+        public const double MTP_ZOOMIN_TIME = 0.7;
+        public float MENU_X_PADDING { get; private set; }
+        public float MENU_Y_PADDING { get; private set; }
+        public float MENU_LEVEL_MARGIN { get; private set; }
+        public float MENU_LEVEL_DIST { get; private set; }
+        public float MENU_LEVEL_WIDTH { get; private set; }
+        public double TAP_THRESHOLD_DIST { get; private set; }
 
-        public static RectangleF StartButton { get; private set; }
+        public Stage Stage { get; private set; } = Stage.Start;
+
+        public delegate void SimpleHandler();
+        public event SimpleHandler StageChanged;
+
+        public RectangleF StartButton { get; private set; }
         public static readonly Color StartColor = Color.DodgerBlue;
+        public static readonly Color PlayingColor = Color.Black;
+        public static readonly Color MenuColor = Color.FromArgb(247, 239, 210);
+        public Level StartLevel { get; private set; }
+        
+        public float MenuTileSize { get; private set; }
+        public List<Size> TileSizes { get; private set; }
 
-        public static float TileWidth { get; private set; }
-        public static float TileHeight { get; private set; }
-        public static float MenuTileSize { get; private set; }
-        public static List<Size> TileSizes { get; private set; }
+        public int MenuLevelIndex { get; private set; }
+        public float MenuOffset { get; set; }
 
-        public static int MenuLevelIndex { get; private set; }
-        public static float MenuOffset { get; set; }
+        public float MouseX { get; private set; }
+        public float MouseY { get; private set; }
 
-        public static float MouseX { get; private set; }
-        public static float MouseY { get; private set; }
+        public bool Dragging { get; private set; }
 
-        public static bool Dragging { get; private set; }
+        public int DragTileX { get; private set; }
+        public int DragTileY { get; private set; }
 
-        public static int DragTileX { get; private set; }
-        public static int DragTileY { get; private set; }
+        public float DragOffsetX { get; private set; }
+        public float DragOffsetY { get; private set; }
 
-        public static float DragOffsetX { get; private set; }
-        public static float DragOffsetY { get; private set; }
+        public bool MenuToPlaying { get; private set; }
+        public double MTPBackgroundCoverAlpha { get; private set; }
+        public float MTPLevelScale { get; private set; }
+        public float MTPMenuOffset { get; private set; }
+        public float MTPMenuXPadding { get; private set; }
+        public float MTPMenuYPadding { get; private set; }
 
-        private static float menuDragStartX;
-        private static float menuStartOffset;
-        private static float menuLastOffset;
+        private bool mtpFadeoutEnded;
+        private double mtpFadeoutTime;
+        private double mtpZoominTime;
 
-        private static bool prevDragging;
+        private float menuDragStartX;
+        private float menuDragStartY;
+        private float menuStartOffset;
+        private float menuLastOffset;
 
-        private static double menuScrollTime;
-        private static float menuScrollGlobalStartOffset;
-        private static float menuScrollGlobalEndOffset;
+        private bool prevDragging;
+        private bool touchIsTap;
 
-        public static void Init(int width, int height)
+        private double menuSnapTime;
+        private bool menuSnapOngoing;
+
+        private double menuScrollTime;
+        private float menuScrollGlobalStartOffset;
+        private float menuScrollGlobalEndOffset;
+
+        private readonly Game game;
+
+        public UI(Game game, int width, int height)
         {
+            this.game = game;
+
             SCREEN_WIDTH = width;
             SCREEN_HEIGHT = height;
 
-            SetTileSize();
+            StartLevel = LevelInfo.GetRandom(7, 7, TileLock.None).ToLevel();
+            StartLevel.Swap(1, 1, StartLevel.Width - 2, StartLevel.Height - 2);
 
-            MenuTileSize = TileWidth;
+            GetTileSize(StartLevel, out float mts, out float _);
+            MenuTileSize = mts;
+
             MENU_X_PADDING = (1 - MENU_LEVEL_SCALE) / 2 * SCREEN_WIDTH;
             MENU_Y_PADDING = 0.15f * SCREEN_HEIGHT;
             MENU_LEVEL_MARGIN = 0.09f * SCREEN_WIDTH;
             MENU_LEVEL_WIDTH = SCREEN_WIDTH * MENU_LEVEL_SCALE;
             MENU_LEVEL_DIST = MENU_LEVEL_WIDTH + MENU_LEVEL_MARGIN;
+            TAP_THRESHOLD_DIST = 0.05f * SCREEN_WIDTH;
+            LEVEL_VERTICAL_GAP = 0.05f * SCREEN_HEIGHT;
 
             float bWidth = SCREEN_WIDTH / 3f;
             float bHeight = (SCREEN_HEIGHT - SCREEN_WIDTH) / 3f;
             StartButton = new RectangleF(bWidth, SCREEN_WIDTH + bHeight, bWidth, bHeight);
-            Game.LevelChanged += SetTileSize;
 
             TileSizes = new List<Size>();
-            foreach (var level in Game.LevelSet)
+            foreach (var level in game.LevelSet)
             {
                 GetTileSize(level, out float w, out float h);
                 TileSizes.Add(new Size(w, h));
             }
         }
 
-        private static void SetTileSize()
+        public void Back()
         {
-            GetTileSize(Game.Level, out float tileWidth, out float tileHeight);
-            TileWidth = tileWidth;
-            TileHeight = tileHeight;
+            if (Stage == Stage.Playing)
+            {
+                MenuToPlaying = false;
+                MenuOffset = 0;
+                ChangeStage(Stage.Menu);
+            }
         }
 
-        private static void GetTileSize(Level level, out float width, out float height)
+        private void GetTileSize(Level level, out float width, out float height)
         {
-            width = (SCREEN_WIDTH - 2 * HORI_BORDER) / level.Width;
-            height = (SCREEN_HEIGHT - 2 * VERT_BORDER) / level.Height;
+            width = (float)SCREEN_WIDTH / level.Width;
+            height = (SCREEN_HEIGHT - 2 * LEVEL_VERTICAL_GAP) / level.Height;
         }
 
         private static float Smooth(double x)
              => (float)Math.Sin(Math.PI / 2 * x); // => (float)((1 - Math.Cos(Math.PI * x)) / 2);
 
-        private static void NormalizeOffset(int index, float offset, out int nIndex, out float nOffset)
+        private void NormalizeOffset(int index, float offset, out int nIndex, out float nOffset)
         {
             float adjOffset = -offset + MENU_LEVEL_DIST / 2;
 
@@ -116,22 +148,24 @@ namespace Paflamy
             nOffset = -((adjOffset % MENU_LEVEL_DIST) + (adjOffset < 0 ? MENU_LEVEL_DIST : 0) - MENU_LEVEL_DIST / 2);
         }
 
-        private static float GetGlobalOffset(int index, float offset)
+        private float GetGlobalOffset(int index, float offset)
             => -index * MENU_LEVEL_DIST + offset;
 
-        private static void UpdateMenuStage(double dt)
+        private void UpdateMenuStage(double dt)
         {
             if (!Dragging && MenuOffset != 0)
             {
                 if (prevDragging && menuLastOffset != 0)
                 {
+                    menuSnapOngoing = false;
+
                     NormalizeOffset(MenuLevelIndex, MenuOffset, out int scrollStartIndex, out float scrollStartOffset);
                     int scrollEndIndex = scrollStartIndex + (scrollStartIndex == MenuLevelIndex ? -Math.Sign(menuLastOffset) : 0);
 
                     if (scrollEndIndex < 0)
                         scrollEndIndex = 0;
-                    else if (scrollEndIndex >= Game.LevelSet.Count)
-                        scrollEndIndex = Game.LevelSet.Count - 1;
+                    else if (scrollEndIndex >= game.LevelSet.Count)
+                        scrollEndIndex = game.LevelSet.Count - 1;
 
                     menuScrollGlobalStartOffset = GetGlobalOffset(scrollStartIndex, scrollStartOffset);
                     menuScrollGlobalEndOffset = GetGlobalOffset(scrollEndIndex, 0);
@@ -162,41 +196,97 @@ namespace Paflamy
                     //scrollProgress = 0; // isn't necessary
                 }
             }
+            else if (menuSnapOngoing)
+            {
+                if (menuSnapTime / MENU_SNAP_TIME < 1)
+                {
+                    menuSnapTime += dt;
+                    MenuOffset = menuStartOffset + Smooth(menuSnapTime / MENU_SNAP_TIME) * menuLastOffset;
+                }
+                else
+                {
+                    menuSnapOngoing = false;
+                }
+            }
 
             prevDragging = Dragging;
         }
 
-        public static void OnUpdate(double dt)
+        private void UpdateMTP(double dt)
         {
-            switch (Game.Stage)
+            if (mtpFadeoutEnded)
+            {
+                if (mtpZoominTime / MTP_ZOOMIN_TIME < 1)
+                {
+                    mtpZoominTime += dt;
+                    CalculateMTPZooming();
+                }
+                else
+                {
+                    ChangeStage(Stage.Playing);
+                }
+            }
+            else
+            {
+                if (mtpFadeoutTime / MTP_FADEOUT_TIME < 1)
+                {
+                    mtpFadeoutTime += dt;
+                    MTPBackgroundCoverAlpha = Smooth(mtpFadeoutTime / MTP_FADEOUT_TIME);
+                }
+                else
+                {
+                    mtpFadeoutEnded = true;
+                    MTPBackgroundCoverAlpha = 1;
+                }
+            }
+        }
+
+        private void CalculateMTPZooming()
+        {
+            var smooth = Smooth(mtpZoominTime / MTP_ZOOMIN_TIME);
+            MTPLevelScale = MENU_LEVEL_SCALE + smooth * (1 - MENU_LEVEL_SCALE);
+            MTPMenuOffset = MenuOffset * (1 - smooth);
+            MTPMenuXPadding = MENU_X_PADDING * (1 - smooth);
+            MTPMenuYPadding = MENU_Y_PADDING + smooth * (LEVEL_VERTICAL_GAP - MENU_Y_PADDING);
+        }
+
+        private void ChangeStage(Stage stage)
+        {
+            Stage = stage;
+            StageChanged?.Invoke();
+        }
+
+        public void OnUpdate(double dt)
+        {
+            switch (Stage)
             {
                 case Stage.Playing: break;
-                case Stage.Menu: UpdateMenuStage(dt); break;
+                case Stage.Menu: if (MenuToPlaying) UpdateMTP(dt); else UpdateMenuStage(dt); break;
                 case Stage.Start: break;
                 default: throw new Exception();
             }
         }
 
-        public static bool OnTouch(MotionEvent e)
+        public bool OnTouch(MotionEvent e)
         {
-            switch (Game.Stage)
+            switch (Stage)
             {
                 case Stage.Playing: HandleGameTouch(e); break;
                 case Stage.Start: HandleStartTouch(e); break;
-                case Stage.Menu: HandleMenuTouch(e); break;
+                case Stage.Menu: if (!MenuToPlaying) HandleMenuTouch(e); break;
                 default: throw new Exception();
             }
 
             return true;
         }
 
-        private static void HandleStartTouch(MotionEvent e)
+        private void HandleStartTouch(MotionEvent e)
         {
             if (e.Action == MotionEventActions.Down && StartButton.IntersectsWith(new RectangleF(e.GetX(), e.GetY(), 1, 1)))
-                Game.Start();
+                ChangeStage(Stage.Menu);
         }
 
-        private static void HandleGameTouch(MotionEvent e)
+        private void HandleGameTouch(MotionEvent e)
         {
             MouseX = e.GetX();
             MouseY = e.GetY();
@@ -204,32 +294,17 @@ namespace Paflamy
             if (e.Action != MotionEventActions.Down && e.Action != MotionEventActions.Up)
                 return;
 
-            // DEBUG ZONE START
-
-            if (Util.DEBUG)
-            {
-                if (e.Action == MotionEventActions.Down)
-                {
-                    Game.NewLevel();
-                    Util.Log(Game.Level.Serialized());
-                }
-
-                return;
-            }
-
-            // DEBUG ZONE END
-
-            float xx = MouseX - HORI_BORDER;
-            float yy = MouseY - VERT_BORDER;
+            float xx = MouseX;
+            float yy = MouseY - LEVEL_VERTICAL_GAP;
 
             if (xx >= 0 && yy >= 0)
             {
-                float ox = xx % TileWidth;
-                float oy = yy % TileHeight;
+                float ox = xx % TileSizes[game.LevelIndex].Width;
+                float oy = yy % TileSizes[game.LevelIndex].Height;
 
-                int ix = (int)(xx / TileWidth);
-                int iy = (int)(yy / TileHeight);
-                if (ix < Game.Level.Width && iy < Game.Level.Height && !Game.Level.IsLocked(ix, iy))
+                int ix = (int)(xx / TileSizes[game.LevelIndex].Width);
+                int iy = (int)(yy / TileSizes[game.LevelIndex].Height);
+                if (ix < game.LevelSet[game.LevelIndex].Width && iy < game.LevelSet[game.LevelIndex].Height && !game.LevelSet[game.LevelIndex].IsLocked(ix, iy))
                 {
                     if (e.Action == MotionEventActions.Down)
                     {
@@ -247,8 +322,8 @@ namespace Paflamy
 
                         if (DragTileX != ix || DragTileY != iy)
                         {
-                            Game.Level.Swap(DragTileX, DragTileY, ix, iy);
-                            if (Game.Level.IsSolved())
+                            game.LevelSet[game.LevelIndex].Swap(DragTileX, DragTileY, ix, iy);
+                            if (game.LevelSet[game.LevelIndex].IsSolved())
                                 Util.Log("SOLVED");
                         }
                     }
@@ -265,7 +340,7 @@ namespace Paflamy
             }
         }
 
-        private static void HandleMenuTouch(MotionEvent e)
+        private void HandleMenuTouch(MotionEvent e)
         {
             Dragging = e.Action != MotionEventActions.Up;
 
@@ -273,14 +348,44 @@ namespace Paflamy
             {
                 case MotionEventActions.Down:
                     menuDragStartX = e.GetX();
+                    menuDragStartY = e.GetY();
                     menuStartOffset = MenuOffset;
                     menuLastOffset = 0;
+                    touchIsTap = true;
 
                     break;
 
                 case MotionEventActions.Move:
                     menuLastOffset = e.GetX() - menuDragStartX;
-                    MenuOffset = menuStartOffset + menuLastOffset;
+
+                    if (touchIsTap)
+                    {
+                        if (Math.Pow(menuLastOffset, 2) + Math.Pow(e.GetY() - menuDragStartY, 2) > Math.Pow(TAP_THRESHOLD_DIST, 2)) // tap &&
+                        {
+                            touchIsTap = false;
+                            menuSnapTime = 0;
+                            menuSnapOngoing = true;
+                        }
+                    }
+                    else if (!menuSnapOngoing)
+                    {
+                        MenuOffset = menuStartOffset + menuLastOffset;
+                    }
+
+                    break;
+
+                case MotionEventActions.Up:
+                    if (touchIsTap)
+                    {
+                        game.LevelIndex = MenuLevelIndex;
+
+                        MenuToPlaying = true;
+                        mtpFadeoutEnded = false;
+                        mtpFadeoutTime = 0;
+                        mtpZoominTime = 0;
+
+                        CalculateMTPZooming();
+                    }
 
                     break;
             }

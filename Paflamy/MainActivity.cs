@@ -1,9 +1,4 @@
-﻿using System;
-using Android.App;
-using Android.Content;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
+﻿using Android.App;
 using Android.OS;
 using Android.Content.PM;
 
@@ -20,7 +15,7 @@ namespace Paflamy
         )]
     public class MainActivity : Activity
     {
-        PaflamyView view;
+        private PaflamyView view;
 
         protected override void OnCreate(Bundle bundle)
         {
@@ -29,6 +24,9 @@ namespace Paflamy
             view = new PaflamyView(this);
             SetContentView(view);
         }
+
+        public override void OnBackPressed()
+            => view.Back();
 
         protected override void OnPause()
         {

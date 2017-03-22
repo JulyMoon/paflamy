@@ -1,48 +1,52 @@
 using System;
 using System.Drawing;
-
-using OpenTK;
-using OpenTK.Graphics;
 using OpenTK.Graphics.ES11;
-using OpenTK.Platform;
-using OpenTK.Platform.Android;
-
-using Android.Views;
-using Android.Content;
-using Android.Util;
-using System.Collections.Generic;
-using Size = System.Drawing.SizeF;
-using System.Linq;
 
 namespace Paflamy
 {
-    public static class Graphics
+    public class Graphics
     {
-        public static void OnLoad()
-        {
-            //Util.Log($"w: {UI.SCREEN_WIDTH}, h: {UI.SCREEN_HEIGHT}");
+        private readonly Game game;
+        private readonly UI ui;
 
-            GL.ClearColor(247f / 255, 239f / 255, 210f / 255, 1);
-            GL.PointSize(Math.Min(UI.SCREEN_WIDTH, UI.SCREEN_HEIGHT) * 0.009f);
+        public Graphics(Game game, UI ui)
+        {
+            this.game = game;
+            this.ui = ui;
+            ui.StageChanged += HandleStageChange;
+        }
+
+        private void HandleStageChange()
+            => GLClearColor(ui.Stage == Stage.Playing ? UI.PlayingColor : UI.MenuColor);
+
+        private static void GLClearColor(Color c)
+            => GL.ClearColor(c.R / (float)byte.MaxValue, c.G / (float)byte.MaxValue, c.B / (float)byte.MaxValue, 1);
+
+        public void OnLoad()
+        {
+            HandleStageChange();
+            GL.PointSize(ui.SCREEN_WIDTH * 0.009f);
             GL.MatrixMode(All.Projection);
             GL.LoadIdentity();
-            GL.Ortho(0, UI.SCREEN_WIDTH, UI.SCREEN_HEIGHT, 0, -1, 1);
+            GL.Ortho(0, ui.SCREEN_WIDTH, ui.SCREEN_HEIGHT, 0, -1, 1);
             GL.MatrixMode(All.Modelview);
+            GL.Enable(All.Blend);
+            GL.BlendFunc(All.SrcAlpha, All.OneMinusSrcAlpha);
             GL.LoadIdentity();
         }
 
-        private static void DrawDrag()
+        private void DrawDrag()
         {
             GL.PushMatrix();
-            GL.Translate(UI.MouseX - UI.DragOffsetX, UI.MouseY - UI.DragOffsetY, 0);
-            GL.Scale(UI.TileWidth, UI.TileHeight, 1);
+            GL.Translate(ui.MouseX - ui.DragOffsetX, ui.MouseY - ui.DragOffsetY, 0);
+            GL.Scale(ui.TileSizes[game.LevelIndex].Width, ui.TileSizes[game.LevelIndex].Height, 1);
 
-            DrawTile(Game.Level, UI.DragTileX, UI.DragTileY);
+            DrawTile(game.LevelSet[game.LevelIndex], ui.DragTileX, ui.DragTileY);
 
             GL.PopMatrix();
         }
 
-        private static void DrawLevel(Level level, float xOffset, float yOffset, float tileWidth, float tileHeight, float scale = 1)
+        private void DrawLevel(Level level, float xOffset, float yOffset, float tileWidth, float tileHeight, float scale = 1)
         {
             GL.PushMatrix();
             GL.Translate(xOffset, yOffset, 0);
@@ -51,7 +55,7 @@ namespace Paflamy
 
             for (int x = 0; x < level.Width; ++x)
                 for (int y = 0; y < level.Height; ++y)
-                    if (Game.Stage != Stage.Playing || !UI.Dragging || x != UI.DragTileX || y != UI.DragTileY)
+                    if (ui.Stage != Stage.Playing || !ui.Dragging || x != ui.DragTileX || y != ui.DragTileY)
                     {
                         GL.PushMatrix();
                         GL.Translate(x, y, 0);
@@ -106,59 +110,78 @@ namespace Paflamy
             GL.DisableClientState(All.VertexArray);
         }
 
-        private static void DrawStartButton()
+        private void DrawStartButton()
         {
             GL.PushMatrix();
-            GL.Translate(UI.StartButton.X, UI.StartButton.Y, 0);
-            GL.Scale(UI.StartButton.Width, UI.StartButton.Height, 1);
+            GL.Translate(ui.StartButton.X, ui.StartButton.Y, 0);
+            GL.Scale(ui.StartButton.Width, ui.StartButton.Height, 1);
 
             DrawRectangle(UI.StartColor);
 
             GL.PopMatrix();
         }
 
-        public static void OnRender(double dt)
+        public void OnRender(double dt)
         {
             GL.Clear((uint)All.ColorBufferBit);
 
-            switch (Game.Stage)
+            switch (ui.Stage)
             {
                 case Stage.Playing: DrawPlayingStage(); break;
-                case Stage.Menu: DrawMenuStage(); break;
+                case Stage.Menu: if (ui.MenuToPlaying) DrawMTP(); else DrawMenuStage(); break;
                 case Stage.Start: DrawStartStage(); break;
                 default: throw new Exception();
             }
         }
 
-        private static void DrawPlayingStage()
+        private void DrawPlayingStage()
         {
-            DrawLevel(Game.Level, UI.HORI_BORDER, UI.VERT_BORDER, UI.TileWidth, UI.TileHeight);
+            DrawLevel(game.LevelSet[game.LevelIndex], 0, ui.LEVEL_VERTICAL_GAP, ui.TileSizes[game.LevelIndex].Width, ui.TileSizes[game.LevelIndex].Height);
 
-            if (UI.Dragging)
+            if (ui.Dragging)
                 DrawDrag();
         }
 
-        private static void DrawStartStage()
+        private void DrawStartStage()
         {
-            DrawLevel(Game.Level, 0, 0, UI.MenuTileSize, UI.MenuTileSize);
+            DrawLevel(ui.StartLevel, 0, 0, ui.MenuTileSize, ui.MenuTileSize);
             DrawStartButton();
         }
 
-        private static void DrawMenuStage()
+        private void DrawMenuStage()
         {
             for (int j = -UI.MENU_NEIGHBOR_COUNT; j <= UI.MENU_NEIGHBOR_COUNT; ++j)
             {
-                int i = UI.MenuLevelIndex + j;
-                if (i >= 0 && i < Game.LevelSet.Count)
+                int i = ui.MenuLevelIndex + j;
+                if (i >= 0 && i < game.LevelSet.Count)
                 {
-                    DrawLevel(Game.LevelSet[i],
-                              UI.MENU_X_PADDING + UI.MENU_LEVEL_DIST * j + UI.MenuOffset,
-                              UI.MENU_Y_PADDING,
-                              UI.TileSizes[i].Width,
-                              UI.TileSizes[i].Height,
+                    DrawLevel(game.LevelSet[i],
+                              ui.MENU_X_PADDING + ui.MENU_LEVEL_DIST * j + ui.MenuOffset,
+                              ui.MENU_Y_PADDING,
+                              ui.TileSizes[i].Width,
+                              ui.TileSizes[i].Height,
                               UI.MENU_LEVEL_SCALE);
                 }
             }
+        }
+
+        private void DrawMTP()
+        {
+            DrawMenuStage();
+
+            GL.PushMatrix();
+            GL.Scale(ui.SCREEN_WIDTH, ui.SCREEN_HEIGHT, 1);
+
+            DrawRectangle(Color.FromArgb((int)(ui.MTPBackgroundCoverAlpha * Byte.MaxValue), UI.PlayingColor));
+
+            GL.PopMatrix();
+
+            DrawLevel(game.LevelSet[game.LevelIndex],
+                      ui.MTPMenuXPadding + ui.MTPMenuOffset,
+                      ui.MTPMenuYPadding,
+                      ui.TileSizes[game.LevelIndex].Width,
+                      ui.TileSizes[game.LevelIndex].Height,
+                      ui.MTPLevelScale);
         }
 
         private static void GLColor4(Color c)

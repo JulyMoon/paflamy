@@ -1,43 +1,46 @@
 using System;
-using System.Drawing;
 
 using OpenTK;
-using OpenTK.Graphics;
-using OpenTK.Graphics.ES11;
-using OpenTK.Platform;
 using OpenTK.Platform.Android;
 
 using Android.Views;
 using Android.Content;
-using Android.Util;
 
 namespace Paflamy
 {
     public class PaflamyView : AndroidGameView
     {
+        private readonly Game game;
+        private readonly UI ui;
+        private readonly Graphics graphics;
+
         public PaflamyView(Context context) : base(context)
         {
-            Game.Init(context.Resources.GetString(Resource.String.LevelSet));
-            UI.Init(Resources.DisplayMetrics.WidthPixels, Resources.DisplayMetrics.HeightPixels);
+            game = new Game(context.Resources.GetString(Resource.String.LevelSet));
+            ui = new UI(game, Resources.DisplayMetrics.WidthPixels, Resources.DisplayMetrics.HeightPixels);
+            graphics = new Graphics(game, ui);
         }
+
+        public void Back()
+            => ui.Back();
 
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
 
-            Graphics.OnLoad();
+            graphics.OnLoad();
 
             Run();
         }
 
         public override bool OnTouchEvent(MotionEvent e)
-            => UI.OnTouch(e);
+            => ui.OnTouch(e);
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             base.OnRenderFrame(e);
 
-            Graphics.OnRender(e.Time);
+            graphics.OnRender(e.Time);
 
             SwapBuffers();
         }
@@ -46,7 +49,7 @@ namespace Paflamy
         {
             base.OnUpdateFrame(e);
 
-            UI.OnUpdate(e.Time);
+            ui.OnUpdate(e.Time);
         }
 
         protected override void CreateFrameBuffer()
