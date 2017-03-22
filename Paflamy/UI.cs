@@ -23,6 +23,8 @@ namespace Paflamy
         public const int MENU_NEIGHBOR_COUNT = 2;
         public const double MENU_SCROLL_TIME = 0.5;
         public const double MENU_SNAP_TIME = 0.1;
+        public const double MTP_FADEOUT_TIME = 0.3; // mtp = menu-to-playing transition
+        public const double MTP_ZOOMIN_TIME = 0.7;
         public float MENU_X_PADDING { get; private set; }
         public float MENU_Y_PADDING { get; private set; }
         public float MENU_LEVEL_MARGIN { get; private set; }
@@ -57,6 +59,17 @@ namespace Paflamy
 
         public float DragOffsetX { get; private set; }
         public float DragOffsetY { get; private set; }
+
+        public bool MenuToPlaying { get; private set; }
+        public double MTPBackgroundCoverAlpha { get; private set; }
+        public float MTPLevelScale { get; private set; }
+        public float MTPMenuOffset { get; private set; }
+        public float MTPMenuXPadding { get; private set; }
+        public float MTPMenuYPadding { get; private set; }
+
+        private bool mtpFadeoutEnded;
+        private double mtpFadeoutTime;
+        private double mtpZoominTime;
 
         private float menuDragStartX;
         private float menuDragStartY;
@@ -133,6 +146,38 @@ namespace Paflamy
 
         private void UpdateMenuStage(double dt)
         {
+            if (MenuToPlaying)
+            {
+                if (mtpFadeoutEnded)
+                {
+                    if (mtpZoominTime / MTP_ZOOMIN_TIME < 1)
+                    {
+                        mtpZoominTime += dt;
+                        CalculateMTPZooming();
+                    }
+                    else
+                    {
+                        ChangeStage(Stage.Playing);
+                        MenuToPlaying = false;
+                    }
+                }
+                else
+                {
+                    if (mtpFadeoutTime / MTP_FADEOUT_TIME < 1)
+                    {
+                        mtpFadeoutTime += dt;
+                        MTPBackgroundCoverAlpha = Smooth(mtpFadeoutTime / MTP_FADEOUT_TIME);
+                    }
+                    else
+                    {
+                        mtpFadeoutEnded = true;
+                        //MTPBackgroundCoverAlpha = 1;
+                    }
+                }
+
+                return;
+            }
+
             if (!Dragging && MenuOffset != 0)
             {
                 if (prevDragging && menuLastOffset != 0)
@@ -192,6 +237,15 @@ namespace Paflamy
             prevDragging = Dragging;
         }
 
+        private void CalculateMTPZooming()
+        {
+            var smooth = Smooth(mtpZoominTime / MTP_ZOOMIN_TIME);
+            MTPLevelScale = MENU_LEVEL_SCALE + smooth * (1 - MENU_LEVEL_SCALE);
+            MTPMenuOffset = MenuOffset * (1 - smooth);
+            MTPMenuXPadding = MENU_X_PADDING * (1 - smooth);
+            MTPMenuYPadding = MENU_Y_PADDING + smooth * (LEVEL_VERTICAL_GAP - MENU_Y_PADDING);
+        }
+
         private void ChangeStage(Stage stage)
         {
             Stage = stage;
@@ -215,7 +269,7 @@ namespace Paflamy
             {
                 case Stage.Playing: HandleGameTouch(e); break;
                 case Stage.Start: HandleStartTouch(e); break;
-                case Stage.Menu: HandleMenuTouch(e); break;
+                case Stage.Menu: if (!MenuToPlaying) HandleMenuTouch(e); break;
                 default: throw new Exception();
             }
 
@@ -320,7 +374,13 @@ namespace Paflamy
                     if (touchIsTap)
                     {
                         game.LevelIndex = MenuLevelIndex;
-                        ChangeStage(Stage.Playing);
+
+                        MenuToPlaying = true;
+                        mtpFadeoutEnded = false;
+                        mtpFadeoutTime = 0;
+                        mtpZoominTime = 0;
+
+                        CalculateMTPZooming();
                     }
 
                     break;

@@ -30,6 +30,8 @@ namespace Paflamy
             GL.LoadIdentity();
             GL.Ortho(0, ui.SCREEN_WIDTH, ui.SCREEN_HEIGHT, 0, -1, 1);
             GL.MatrixMode(All.Modelview);
+            GL.Enable(All.Blend);
+            GL.BlendFunc(All.SrcAlpha, All.OneMinusSrcAlpha);
             GL.LoadIdentity();
         }
 
@@ -126,7 +128,7 @@ namespace Paflamy
             switch (ui.Stage)
             {
                 case Stage.Playing: DrawPlayingStage(); break;
-                case Stage.Menu: DrawMenuStage(); break;
+                case Stage.Menu: if (ui.MenuToPlaying) DrawMTP(); else DrawMenuStage(); break;
                 case Stage.Start: DrawStartStage(); break;
                 default: throw new Exception();
             }
@@ -161,6 +163,25 @@ namespace Paflamy
                               UI.MENU_LEVEL_SCALE);
                 }
             }
+        }
+
+        private void DrawMTP()
+        {
+            DrawMenuStage();
+
+            GL.PushMatrix();
+            GL.Scale(ui.SCREEN_WIDTH, ui.SCREEN_HEIGHT, 1);
+            
+            DrawRectangle(Color.FromArgb((int)(ui.MTPBackgroundCoverAlpha * Byte.MaxValue), Color.Black));
+
+            GL.PopMatrix();
+
+            DrawLevel(game.LevelSet[game.LevelIndex],
+                      ui.MTPMenuXPadding + ui.MTPMenuOffset,
+                      ui.MTPMenuYPadding,
+                      ui.TileSizes[game.LevelIndex].Width,
+                      ui.TileSizes[game.LevelIndex].Height,
+                      ui.MTPLevelScale);
         }
 
         private static void GLColor4(Color c)
