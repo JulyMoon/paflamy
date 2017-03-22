@@ -146,38 +146,6 @@ namespace Paflamy
 
         private void UpdateMenuStage(double dt)
         {
-            if (MenuToPlaying)
-            {
-                if (mtpFadeoutEnded)
-                {
-                    if (mtpZoominTime / MTP_ZOOMIN_TIME < 1)
-                    {
-                        mtpZoominTime += dt;
-                        CalculateMTPZooming();
-                    }
-                    else
-                    {
-                        ChangeStage(Stage.Playing);
-                        MenuToPlaying = false;
-                    }
-                }
-                else
-                {
-                    if (mtpFadeoutTime / MTP_FADEOUT_TIME < 1)
-                    {
-                        mtpFadeoutTime += dt;
-                        MTPBackgroundCoverAlpha = Smooth(mtpFadeoutTime / MTP_FADEOUT_TIME);
-                    }
-                    else
-                    {
-                        mtpFadeoutEnded = true;
-                        //MTPBackgroundCoverAlpha = 1;
-                    }
-                }
-
-                return;
-            }
-
             if (!Dragging && MenuOffset != 0)
             {
                 if (prevDragging && menuLastOffset != 0)
@@ -237,6 +205,36 @@ namespace Paflamy
             prevDragging = Dragging;
         }
 
+        private void UpdateMTP(double dt)
+        {
+            if (mtpFadeoutEnded)
+            {
+                if (mtpZoominTime / MTP_ZOOMIN_TIME < 1)
+                {
+                    mtpZoominTime += dt;
+                    CalculateMTPZooming();
+                }
+                else
+                {
+                    ChangeStage(Stage.Playing);
+                    MenuToPlaying = false;
+                }
+            }
+            else
+            {
+                if (mtpFadeoutTime / MTP_FADEOUT_TIME < 1)
+                {
+                    mtpFadeoutTime += dt;
+                    MTPBackgroundCoverAlpha = Smooth(mtpFadeoutTime / MTP_FADEOUT_TIME);
+                }
+                else
+                {
+                    mtpFadeoutEnded = true;
+                    MTPBackgroundCoverAlpha = 1;
+                }
+            }
+        }
+
         private void CalculateMTPZooming()
         {
             var smooth = Smooth(mtpZoominTime / MTP_ZOOMIN_TIME);
@@ -257,7 +255,7 @@ namespace Paflamy
             switch (Stage)
             {
                 case Stage.Playing: break;
-                case Stage.Menu: UpdateMenuStage(dt); break;
+                case Stage.Menu: if (MenuToPlaying) UpdateMTP(dt); else UpdateMenuStage(dt); break;
                 case Stage.Start: break;
                 default: throw new Exception();
             }
