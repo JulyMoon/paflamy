@@ -1,17 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using Android.App;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
 using Android.Views;
-using Android.Widget;
-
 using System.Drawing;
-using Size = System.Drawing.SizeF;
 
 namespace Paflamy
 {
@@ -19,19 +8,19 @@ namespace Paflamy
     {
         public bool StartStage { get; private set; } = true;
 
-        public const float MENU_LEVEL_SCALE = 0.6f;
-        public const int MENU_NEIGHBOR_COUNT = 2;
-        public const double MENU_SCROLL_TIME = 0.5;
-        public const double MENU_SNAP_TIME = 0.1;
+        public const float LEVEL_SCALE = 0.6f;
+        public const int NEIGHBORING_LEVEL_COUNT = 2;
+        public const double SCROLL_TIME = 0.5;
+        public const double SNAP_TIME = 0.1;
         public const double MTP_FADEOUT_TIME = 0.8; // mtp = menu-to-playing transition
-        // THIS SHOULD ALWAYS BE TRUE: MTP_FADEOUT_TIME <= MTP_ZOOMIN_START_TIME + MTP_ZOOMIN_TIME
+        // THIS SHOULD ALWAYS BE TRUE: MTP_FADEOUT_TIME <= MTP_ZOOMIN_DELAY + MTP_ZOOMIN_TIME
         public const double MTP_ZOOMIN_TIME = 1.2;
         public const double MTP_ZOOMIN_DELAY = 0.2;
-        public float MENU_X_PADDING { get; private set; }
-        public float MENU_Y_PADDING { get; private set; }
-        public float MENU_LEVEL_MARGIN { get; private set; }
-        public float MENU_LEVEL_DIST { get; private set; }
-        public float MENU_LEVEL_WIDTH { get; private set; }
+        public float X_PADDING { get; private set; }
+        public float Y_PADDING { get; private set; }
+        public float LEVEL_MARGIN { get; private set; }
+        public float LEVEL_DISTANCE { get; private set; }
+        public float LEVEL_WIDTH { get; private set; }
 
         public RectangleF StartButton { get; private set; }
         public static readonly Color StartButtonColor = Color.DodgerBlue;
@@ -40,35 +29,35 @@ namespace Paflamy
 
         public event UI.SimpleHandler SwitchToPlaying;
 
-        public float MenuTileSize { get; private set; }
+        public float StartTileSize { get; private set; }
 
-        public int MenuLevelIndex { get; private set; }
-        public float MenuOffset { get; private set; }
+        public int LevelIndex { get; private set; }
+        public float Offset { get; private set; }
 
-        public bool MenuToPlaying { get; private set; }
+        public bool MTPOngoing { get; private set; }
         public double MTPBackgroundCoverAlpha { get; private set; }
         public float MTPLevelScale { get; private set; }
-        public float MTPMenuOffset { get; private set; }
-        public float MTPMenuXPadding { get; private set; }
-        public float MTPMenuYPadding { get; private set; }
+        public float MTPOffset { get; private set; }
+        public float MTPXPadding { get; private set; }
+        public float MTPYPadding { get; private set; }
 
         private double mtpTime;
 
         private bool dragging;
-        private float menuDragStartX;
-        private float menuDragStartY;
-        private float menuStartOffset;
-        private float menuLastOffset;
+        private float dragStartX;
+        private float dragStartY;
+        private float startOffset;
+        private float lastOffset;
 
         private bool prevDragging;
         private bool touchIsTap;
 
-        private double menuSnapTime;
-        private bool menuSnapOngoing;
+        private double snapTime;
+        private bool snapOngoing;
 
-        private double menuScrollTime;
-        private float menuScrollGlobalStartOffset;
-        private float menuScrollGlobalEndOffset;
+        private double scrollTime;
+        private float scrollGlobalStartOffset;
+        private float scrollGlobalEndOffset;
 
         private readonly UI ui;
         private readonly Game game;
@@ -82,13 +71,13 @@ namespace Paflamy
             StartLevel.Swap(1, 1, StartLevel.Width - 2, StartLevel.Height - 2);
 
             ui.GetTileSize(StartLevel, out float mts, out float _);
-            MenuTileSize = mts;
+            StartTileSize = mts;
 
-            MENU_X_PADDING = (1 - MENU_LEVEL_SCALE) / 2 * ui.SCREEN_WIDTH;
-            MENU_Y_PADDING = 0.15f * ui.SCREEN_HEIGHT;
-            MENU_LEVEL_MARGIN = 0.09f * ui.SCREEN_WIDTH;
-            MENU_LEVEL_WIDTH = ui.SCREEN_WIDTH * MENU_LEVEL_SCALE;
-            MENU_LEVEL_DIST = MENU_LEVEL_WIDTH + MENU_LEVEL_MARGIN;
+            X_PADDING = (1 - LEVEL_SCALE) / 2 * ui.SCREEN_WIDTH;
+            Y_PADDING = 0.15f * ui.SCREEN_HEIGHT;
+            LEVEL_MARGIN = 0.09f * ui.SCREEN_WIDTH;
+            LEVEL_WIDTH = ui.SCREEN_WIDTH * LEVEL_SCALE;
+            LEVEL_DISTANCE = LEVEL_WIDTH + LEVEL_MARGIN;
 
             float bWidth = ui.SCREEN_WIDTH / 3f;
             float bHeight = (ui.SCREEN_HEIGHT - ui.SCREEN_WIDTH) / 3f;
@@ -97,76 +86,76 @@ namespace Paflamy
 
         public void ResetAnimations()
         {
-            MenuToPlaying = false;
-            MenuOffset = 0;
+            MTPOngoing = false;
+            Offset = 0;
         }
 
         private void NormalizeOffset(int index, float offset, out int nIndex, out float nOffset)
         {
-            float adjOffset = -offset + MENU_LEVEL_DIST / 2;
+            float adjOffset = -offset + LEVEL_DISTANCE / 2;
 
-            nIndex = index + (int)(adjOffset / MENU_LEVEL_DIST) + (adjOffset < 0 ? -1 : 0);
-            nOffset = -((adjOffset % MENU_LEVEL_DIST) + (adjOffset < 0 ? MENU_LEVEL_DIST : 0) - MENU_LEVEL_DIST / 2);
+            nIndex = index + (int)(adjOffset / LEVEL_DISTANCE) + (adjOffset < 0 ? -1 : 0);
+            nOffset = -((adjOffset % LEVEL_DISTANCE) + (adjOffset < 0 ? LEVEL_DISTANCE : 0) - LEVEL_DISTANCE / 2);
         }
 
         private float GetGlobalOffset(int index, float offset)
-            => -index * MENU_LEVEL_DIST + offset;
+            => -index * LEVEL_DISTANCE + offset;
 
         private void UpdateMenuStage(double dt)
         {
-            if (!dragging && MenuOffset != 0)
+            if (!dragging && Offset != 0)
             {
-                if (prevDragging && menuLastOffset != 0)
+                if (prevDragging && lastOffset != 0)
                 {
-                    menuSnapOngoing = false;
+                    snapOngoing = false;
 
-                    NormalizeOffset(MenuLevelIndex, MenuOffset, out int scrollStartIndex, out float scrollStartOffset);
-                    int scrollEndIndex = scrollStartIndex + (scrollStartIndex == MenuLevelIndex ? -Math.Sign(menuLastOffset) : 0);
+                    NormalizeOffset(LevelIndex, Offset, out int scrollStartIndex, out float scrollStartOffset);
+                    int scrollEndIndex = scrollStartIndex + (scrollStartIndex == LevelIndex ? -Math.Sign(lastOffset) : 0);
 
                     if (scrollEndIndex < 0)
                         scrollEndIndex = 0;
                     else if (scrollEndIndex >= game.LevelSet.Count)
                         scrollEndIndex = game.LevelSet.Count - 1;
 
-                    menuScrollGlobalStartOffset = GetGlobalOffset(scrollStartIndex, scrollStartOffset);
-                    menuScrollGlobalEndOffset = GetGlobalOffset(scrollEndIndex, 0);
+                    scrollGlobalStartOffset = GetGlobalOffset(scrollStartIndex, scrollStartOffset);
+                    scrollGlobalEndOffset = GetGlobalOffset(scrollEndIndex, 0);
 
-                    menuScrollTime = 0;
+                    scrollTime = 0;
                 }
-                else if (menuScrollTime / MENU_SCROLL_TIME < 1)
+                else if (scrollTime / SCROLL_TIME < 1)
                 {
-                    menuScrollTime += dt;
+                    scrollTime += dt;
 
                     // ----------
                     NormalizeOffset
                     (
                         0,
-                        menuScrollGlobalStartOffset + Smooth(menuScrollTime / MENU_SCROLL_TIME) * (menuScrollGlobalEndOffset - menuScrollGlobalStartOffset),
+                        scrollGlobalStartOffset + Smooth(scrollTime / SCROLL_TIME) * (scrollGlobalEndOffset - scrollGlobalStartOffset),
                         out int nIndex,
                         out float nOffset
                     );
                     // ----------
 
-                    MenuLevelIndex = nIndex;
-                    MenuOffset = nOffset;
+                    LevelIndex = nIndex;
+                    Offset = nOffset;
                 }
                 else
                 {
-                    MenuOffset = 0; // the smooth function brings it very close to 0 (due to float inaccuracy) at the end of the animation
+                    Offset = 0; // the smooth function brings it very close to 0 (due to float inaccuracy) at the end of the animation
                                     // but I have to set to 0 here to avoid going into this 'if'
                                     //scrollProgress = 0; // isn't necessary
                 }
             }
-            else if (menuSnapOngoing)
+            else if (snapOngoing)
             {
-                if (menuSnapTime / MENU_SNAP_TIME < 1)
+                if (snapTime / SNAP_TIME < 1)
                 {
-                    menuSnapTime += dt;
-                    MenuOffset = menuStartOffset + Smooth(menuSnapTime / MENU_SNAP_TIME) * menuLastOffset;
+                    snapTime += dt;
+                    Offset = startOffset + Smooth(snapTime / SNAP_TIME) * lastOffset;
                 }
                 else
                 {
-                    menuSnapOngoing = false;
+                    snapOngoing = false;
                 }
             }
 
@@ -190,10 +179,10 @@ namespace Paflamy
             var zoominSmooth = Smooth(Math.Max(mtpTime - MTP_ZOOMIN_DELAY, 0) / MTP_ZOOMIN_TIME);
 
             MTPBackgroundCoverAlpha = fadeoutSmooth;
-            MTPLevelScale = MENU_LEVEL_SCALE + zoominSmooth * (1 - MENU_LEVEL_SCALE);
-            MTPMenuOffset = MenuOffset * (1 - zoominSmooth);
-            MTPMenuXPadding = MENU_X_PADDING * (1 - zoominSmooth);
-            MTPMenuYPadding = MENU_Y_PADDING + zoominSmooth * (ui.LEVEL_VERTICAL_GAP - MENU_Y_PADDING);
+            MTPLevelScale = LEVEL_SCALE + zoominSmooth * (1 - LEVEL_SCALE);
+            MTPOffset = Offset * (1 - zoominSmooth);
+            MTPXPadding = X_PADDING * (1 - zoominSmooth);
+            MTPYPadding = Y_PADDING + zoominSmooth * (ui.LEVEL_VERTICAL_GAP - Y_PADDING);
         }
 
         private static float Smooth(double x)
@@ -201,7 +190,7 @@ namespace Paflamy
 
         public void Update(double dt)
         {
-            if (MenuToPlaying)
+            if (MTPOngoing)
                 UpdateMTP(dt);
             else
                 UpdateMenuStage(dt);
@@ -225,39 +214,37 @@ namespace Paflamy
             switch (e.Action)
             {
                 case MotionEventActions.Down:
-                    menuDragStartX = e.GetX();
-                    menuDragStartY = e.GetY();
-                    menuStartOffset = MenuOffset;
-                    menuLastOffset = 0;
+                    dragStartX = e.GetX();
+                    dragStartY = e.GetY();
+                    startOffset = Offset;
+                    lastOffset = 0;
                     touchIsTap = true;
 
                     break;
 
                 case MotionEventActions.Move:
-                    menuLastOffset = e.GetX() - menuDragStartX;
+                    lastOffset = e.GetX() - dragStartX;
 
                     if (touchIsTap)
                     {
-                        if (Math.Pow(menuLastOffset, 2) + Math.Pow(e.GetY() - menuDragStartY, 2) > Math.Pow(ui.TAP_THRESHOLD_DIST, 2)) // tap &&
+                        if (Math.Pow(lastOffset, 2) + Math.Pow(e.GetY() - dragStartY, 2) > Math.Pow(ui.TAP_THRESHOLD_DIST, 2)) // tap &&
                         {
                             touchIsTap = false;
-                            menuSnapTime = 0;
-                            menuSnapOngoing = true;
+                            snapTime = 0;
+                            snapOngoing = true;
                         }
                     }
-                    else if (!menuSnapOngoing)
-                    {
-                        MenuOffset = menuStartOffset + menuLastOffset;
-                    }
+                    else if (!snapOngoing)
+                        Offset = startOffset + lastOffset;
 
                     break;
 
                 case MotionEventActions.Up:
                     if (touchIsTap)
                     {
-                        game.LevelIndex = MenuLevelIndex;
+                        game.LevelIndex = LevelIndex;
 
-                        MenuToPlaying = true;
+                        MTPOngoing = true;
                         mtpTime = 0;
 
                         CalculateMTP();

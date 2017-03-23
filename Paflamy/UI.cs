@@ -1,6 +1,3 @@
-using System;
-using System.Drawing;
-
 using Android.Views;
 using System.Collections.Generic;
 using Size = System.Drawing.SizeF;
@@ -23,8 +20,8 @@ namespace Paflamy
         public List<Size> TileSizes { get; private set; }
 
         private readonly Game game;
-        public readonly GameUI Game;
-        public readonly MenuUI Menu;
+        public readonly GameUI GameUI;
+        public readonly MenuUI MenuUI;
 
         public UI(Game game, int width, int height)
         {
@@ -43,9 +40,9 @@ namespace Paflamy
                 TileSizes.Add(new Size(w, h));
             }
 
-            Game = new GameUI(this, game);
-            Menu = new MenuUI(this, game);
-            Menu.SwitchToPlaying += (() => { ChangeStage(true); });
+            GameUI = new GameUI(this, game);
+            MenuUI = new MenuUI(this, game);
+            MenuUI.SwitchToPlaying += (() => { ChangeStage(true); });
         }
 
         private void ChangeStage(bool playing)
@@ -58,7 +55,7 @@ namespace Paflamy
         {
             if (PlayingStage)
             {
-                Menu.ResetAnimations();
+                MenuUI.ResetAnimations();
                 ChangeStage(false);
             }
         }
@@ -72,15 +69,15 @@ namespace Paflamy
         public void OnUpdate(double dt)
         {
             if (!PlayingStage)
-                Menu.Update(dt);
+                MenuUI.Update(dt);
         }
 
         public bool OnTouch(MotionEvent e)
         {
             if (PlayingStage)
-                Game.HandleTouch(e);
+                GameUI.HandleTouch(e);
             else
-                Menu.HandleTouch(e);
+                MenuUI.HandleTouch(e);
 
             return true;
         }

@@ -38,10 +38,10 @@ namespace Paflamy
         private void DrawDrag()
         {
             GL.PushMatrix();
-            GL.Translate(ui.Game.MouseX - ui.Game.DragOffsetX, ui.Game.MouseY - ui.Game.DragOffsetY, 0);
+            GL.Translate(ui.GameUI.MouseX - ui.GameUI.DragOffsetX, ui.GameUI.MouseY - ui.GameUI.DragOffsetY, 0);
             GL.Scale(ui.TileSizes[game.LevelIndex].Width, ui.TileSizes[game.LevelIndex].Height, 1);
 
-            DrawTile(game.LevelSet[game.LevelIndex], ui.Game.DragTileX, ui.Game.DragTileY);
+            DrawTile(game.LevelSet[game.LevelIndex], ui.GameUI.DragTileX, ui.GameUI.DragTileY);
 
             GL.PopMatrix();
         }
@@ -55,7 +55,7 @@ namespace Paflamy
 
             for (int x = 0; x < level.Width; ++x)
                 for (int y = 0; y < level.Height; ++y)
-                    if (!ui.PlayingStage || !ui.Game.Dragging || x != ui.Game.DragTileX || y != ui.Game.DragTileY)
+                    if (!ui.PlayingStage || !ui.GameUI.Dragging || x != ui.GameUI.DragTileX || y != ui.GameUI.DragTileY)
                     {
                         GL.PushMatrix();
                         GL.Translate(x, y, 0);
@@ -113,8 +113,8 @@ namespace Paflamy
         private void DrawStartButton()
         {
             GL.PushMatrix();
-            GL.Translate(ui.Menu.StartButton.X, ui.Menu.StartButton.Y, 0);
-            GL.Scale(ui.Menu.StartButton.Width, ui.Menu.StartButton.Height, 1);
+            GL.Translate(ui.MenuUI.StartButton.X, ui.MenuUI.StartButton.Y, 0);
+            GL.Scale(ui.MenuUI.StartButton.Width, ui.MenuUI.StartButton.Height, 1);
 
             DrawRectangle(MenuUI.StartButtonColor);
 
@@ -127,9 +127,9 @@ namespace Paflamy
 
             if (ui.PlayingStage)
                 DrawPlayingStage();
-            else if (ui.Menu.StartStage)
+            else if (ui.MenuUI.StartStage)
                 DrawStartStage();
-            else if (ui.Menu.MenuToPlaying)
+            else if (ui.MenuUI.MTPOngoing)
                 DrawMTP();
             else
                 DrawMenuStage();
@@ -139,29 +139,29 @@ namespace Paflamy
         {
             DrawLevel(game.LevelSet[game.LevelIndex], 0, ui.LEVEL_VERTICAL_GAP, ui.TileSizes[game.LevelIndex].Width, ui.TileSizes[game.LevelIndex].Height);
 
-            if (ui.Game.Dragging)
+            if (ui.GameUI.Dragging)
                 DrawDrag();
         }
 
         private void DrawStartStage()
         {
-            DrawLevel(ui.Menu.StartLevel, 0, 0, ui.Menu.MenuTileSize, ui.Menu.MenuTileSize);
+            DrawLevel(ui.MenuUI.StartLevel, 0, 0, ui.MenuUI.StartTileSize, ui.MenuUI.StartTileSize);
             DrawStartButton();
         }
 
         private void DrawMenuStage()
         {
-            for (int j = -MenuUI.MENU_NEIGHBOR_COUNT; j <= MenuUI.MENU_NEIGHBOR_COUNT; ++j)
+            for (int j = -MenuUI.NEIGHBORING_LEVEL_COUNT; j <= MenuUI.NEIGHBORING_LEVEL_COUNT; ++j)
             {
-                int i = ui.Menu.MenuLevelIndex + j;
+                int i = ui.MenuUI.LevelIndex + j;
                 if (i >= 0 && i < game.LevelSet.Count)
                 {
                     DrawLevel(game.LevelSet[i],
-                              ui.Menu.MENU_X_PADDING + ui.Menu.MENU_LEVEL_DIST * j + ui.Menu.MenuOffset,
-                              ui.Menu.MENU_Y_PADDING,
+                              ui.MenuUI.X_PADDING + ui.MenuUI.LEVEL_DISTANCE * j + ui.MenuUI.Offset,
+                              ui.MenuUI.Y_PADDING,
                               ui.TileSizes[i].Width,
                               ui.TileSizes[i].Height,
-                              MenuUI.MENU_LEVEL_SCALE);
+                              MenuUI.LEVEL_SCALE);
                 }
             }
         }
@@ -173,16 +173,16 @@ namespace Paflamy
             GL.PushMatrix();
             GL.Scale(ui.SCREEN_WIDTH, ui.SCREEN_HEIGHT, 1);
 
-            DrawRectangle(Color.FromArgb((int)(ui.Menu.MTPBackgroundCoverAlpha * Byte.MaxValue), GameUI.BackgroundColor));
+            DrawRectangle(Color.FromArgb((int)(ui.MenuUI.MTPBackgroundCoverAlpha * Byte.MaxValue), GameUI.BackgroundColor));
 
             GL.PopMatrix();
 
             DrawLevel(game.LevelSet[game.LevelIndex],
-                      ui.Menu.MTPMenuXPadding + ui.Menu.MTPMenuOffset,
-                      ui.Menu.MTPMenuYPadding,
+                      ui.MenuUI.MTPXPadding + ui.MenuUI.MTPOffset,
+                      ui.MenuUI.MTPYPadding,
                       ui.TileSizes[game.LevelIndex].Width,
                       ui.TileSizes[game.LevelIndex].Height,
-                      ui.Menu.MTPLevelScale);
+                      ui.MenuUI.MTPLevelScale);
         }
 
         private static void GLColor4(Color c)
