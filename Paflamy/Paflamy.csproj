@@ -52,8 +52,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GameUI.cs" />
     <Compile Include="Logic.cs" />
     <Compile Include="Graphics.cs" />
+    <Compile Include="MenuUI.cs" />
     <Compile Include="UI.cs" />
     <Compile Include="LevelInfo.cs" />
     <Compile Include="MainActivity.cs" />
